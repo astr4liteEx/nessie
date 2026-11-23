@@ -1,0 +1,1 @@
+{"kind":"nessus-scan","schema_version":1,"scan":{"file":"testdata/scans/empty-report.nessus","name":"Fixture empty report"},"name":"Fixture empty report","policy_name":"Fixture empty","server_preferences":{},"hosts":0,"results":{"total":0,"0":0,"1":0,"2":0,"3":0,"4":0}}

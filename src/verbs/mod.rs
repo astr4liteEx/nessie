@@ -1,9 +1,13 @@
 //! The built-in verbs. Each is described here; its code lives in its own module.
 
 use crate::cli::{Args, Ctx, MIN_SEVERITY, OUTPUT, Verb};
-use crate::diag::Loc;
+use crate::diag::{Diag, Loc};
+use crate::inputs::{self, Format};
+use std::io::{BufRead, Write};
 
+mod hosts;
 mod results;
+mod scan;
 mod version;
 
 /// The built-in verbs, in the order help lists them.
@@ -28,8 +32,8 @@ pub static ALL: &[Verb] = &[
         output: Some("records"),
         roles: &["source"],
         flags: &[],
-        notes: "",
-        run: not_built,
+        notes: "Reads XML only: records from nessie results carry no HostProperties.",
+        run: hosts::run,
     },
     Verb {
         name: "scan",
@@ -39,8 +43,8 @@ pub static ALL: &[Verb] = &[
         output: Some("records"),
         roles: &["source"],
         flags: &[],
-        notes: "",
-        run: not_built,
+        notes: "Reads XML only: the Policy and counts aren't in a results stream.",
+        run: scan::run,
     },
     Verb {
         name: "items",
@@ -113,6 +117,57 @@ pub fn parse_options(args: &Args) -> Result<crate::nessus::Options, String> {
         }
     };
     Ok(crate::nessus::Options { output: args.has("output"), min_severity, read_policy: false })
+}
+
+/// Runs `each` over every input named on the command line that holds XML.
+/// `each` gets the input's name, the open input, stdout and the Diag, and
+/// returns false to stop (stdout was closed). Returns the exit code.
+pub fn each_scan(
+    args: &Args,
+    ctx: &mut Ctx,
+    verb: &str,
+    mut each: impl FnMut(&str, &mut dyn BufRead, &mut dyn Write, &mut Diag) -> bool,
+) -> i32 {
+    let names = match inputs::names(&args.positional, ctx) {
+        Ok(n) => n,
+        Err(e) => return usage(ctx, verb, &e),
+    };
+    for name in &names {
+        let mut src = match inputs::open(name, &mut *ctx.stdin) {
+            Ok(s) => s,
+            Err(e) => {
+                ctx.diag.error(Loc::path(name), format!("can't read: {e}"));
+                continue;
+            }
+        };
+        match inputs::sniff(&mut src) {
+            Ok(Format::Xml) => {}
+            Ok(Format::Jsonl) => {
+                ctx.diag.error(
+                    Loc::path(name),
+                    format!("this is a JSON Lines stream, not a .nessus scan: {verb} reads the scan itself"),
+                );
+                continue;
+            }
+            Ok(Format::Empty) => {
+                ctx.diag.error(Loc::path(name), "not a Nessus scan: the input is empty");
+                continue;
+            }
+            Ok(Format::Other(b)) => {
+                let hint = if b == b'P' || b == 0x1f { " (compressed? pipe it through zcat or unzip -p)" } else { "" };
+                ctx.diag.error(Loc::path(name), format!("not a Nessus scan: it doesn't start with <{hint}"));
+                continue;
+            }
+            Err(e) => {
+                ctx.diag.error(Loc::path(name), format!("can't read: {e}"));
+                continue;
+            }
+        }
+        if !each(name, &mut src, &mut *ctx.stdout, &mut ctx.diag) {
+            break;
+        }
+    }
+    ctx.diag.code()
 }
 
 /// Reports a usage error found by a verb and returns exit 2.

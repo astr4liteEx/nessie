@@ -1,25 +1,18 @@
 mod common;
-use common::{golden, lines, run, schema};
+use common::golden::case;
+use common::{lines, run};
 
 const SCANS: &str = "testdata/scans";
-
-fn case(name: &str, args: &[&str]) {
-    let r = run(args, b"");
-    for rec in lines(&r.stdout) {
-        schema::validate(&rec);
-    }
-    golden::check(name, &r);
-}
 
 #[test]
 fn results_for_every_fixture() {
     for shape in ["pro-10", "pro-5", "vm-export", "compliance", "edge-identity", "empty-report", "policy-only"] {
         let f = format!("{SCANS}/{shape}.nessus");
-        case(&format!("results-{shape}"), &["results", &f]);
+        let _ = case(&format!("results-{shape}"), &["results", &f]);
     }
-    case("results-output-pro-10", &["results", "--output", &format!("{SCANS}/pro-10.nessus")]);
-    case("results-output-vm-export", &["results", "--output", &format!("{SCANS}/vm-export.nessus")]);
-    case("results-min-severity-pro-10", &["results", "--min-severity", "2", &format!("{SCANS}/pro-10.nessus")]);
+    let _ = case("results-output-pro-10", &["results", "--output", &format!("{SCANS}/pro-10.nessus")]);
+    let _ = case("results-output-vm-export", &["results", "--output", &format!("{SCANS}/vm-export.nessus")]);
+    let _ = case("results-min-severity-pro-10", &["results", "--min-severity", "2", &format!("{SCANS}/pro-10.nessus")]);
 }
 
 #[test]
@@ -35,7 +28,10 @@ fn results_for_every_hostile_case() {
         "invalid-utf8",
         "cdata",
     ] {
-        case(&format!("results-hostile-{shape}"), &["results", "--output", &format!("{SCANS}/hostile/{shape}.nessus")]);
+        let _ = case(
+            &format!("results-hostile-{shape}"),
+            &["results", "--output", &format!("{SCANS}/hostile/{shape}.nessus")],
+        );
     }
 }
 

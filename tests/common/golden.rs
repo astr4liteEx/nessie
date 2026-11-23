@@ -27,3 +27,13 @@ pub fn check(name: &str, r: &Run) {
         );
     }
 }
+
+/// Runs nessie, validates every record it prints, and checks the golden files.
+pub fn case(name: &str, args: &[&str]) -> Run {
+    let r = super::run(args, b"");
+    for rec in super::lines(&r.stdout) {
+        super::schema::validate(&rec);
+    }
+    check(name, &r);
+    r
+}

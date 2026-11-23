@@ -1,0 +1,1 @@
+{"kind":"nessus-host","schema_version":1,"scan":{"file":"testdata/scans/compliance.nessus","name":"Fixture compliance"},"host":{"name":"192.0.2.40","ip":"192.0.2.40"},"properties":{"host-ip":"192.0.2.40"}}

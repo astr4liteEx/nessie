@@ -1,0 +1,4 @@
+{"kind":"nessus-host","schema_version":1,"scan":{"file":"testdata/scans/edge-identity.nessus","name":"Fixture identity edges"},"host":{"name":"agent-only"},"properties":{}}
+{"kind":"nessus-host","schema_version":1,"scan":{"file":"testdata/scans/edge-identity.nessus","name":"Fixture identity edges"},"host":{"name":"192.0.2.51","ip":"192.0.2.51"},"properties":{"host-ip":"192.0.2.51"}}
+{"kind":"nessus-host","schema_version":1,"scan":{"file":"testdata/scans/edge-identity.nessus","name":"Fixture identity edges"},"host":{"name":"host52.example.test","ip":"192.0.2.52","fqdn":"host52.example.test"},"properties":{"host-ip":"192.0.2.52","host-fqdn":"host52.example.test","host-rdns":"host52.example.test"}}
+{"kind":"nessus-host","schema_version":1,"scan":{"file":"testdata/scans/edge-identity.nessus","name":"Fixture identity edges"},"host":{"name":"192.0.2.53","ip":"192.0.2.53"},"properties":{"host-ip":"192.0.2.53","host-fqdn":""}}

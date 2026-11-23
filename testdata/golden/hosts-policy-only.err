@@ -1,0 +1,2 @@
+exit 0
+nessie: testdata/scans/policy-only.nessus: warning: empty scan: there is no Report, only a policy
