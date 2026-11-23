@@ -313,6 +313,7 @@ name = "nessie"
 version = "0.1.0"
 dependencies = [
  "jsonschema",
+ "libc",
  "quick-xml",
  "serde_json",
  "terminal_size",

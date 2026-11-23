@@ -1,0 +1,4 @@
+#!/bin/sh
+# Test extension whose --describe never answers in time.
+[ "$1" = --describe ] && exec sleep 10
+exit 0

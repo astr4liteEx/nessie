@@ -1,0 +1,3 @@
+#!/bin/sh
+# Test extension: later on PATH than a/nessie-echo, so never run.
+printf '{"kind":"scope","id":"1","host":"b"}\n'

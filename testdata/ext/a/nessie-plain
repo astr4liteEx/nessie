@@ -1,0 +1,4 @@
+#!/bin/sh
+# Test extension that says records but prints text: passed through.
+[ "$1" = --describe ] && echo '{"summary":"Plain text","output":"records"}' && exit 0
+echo "plain text"

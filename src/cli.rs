@@ -204,6 +204,7 @@ pub fn run(args: &[String], io: &mut Io) -> i32 {
         return exit::USAGE;
     };
     match first.as_str() {
+        "__complete" | "__completeNoDesc" => return complete(&args[1..], first == "__complete", io),
         "--describe" if args.len() == 1 => return print_json(io, &describe_tool()),
         "--help" | "-h" => return print(io, &tool_help()),
         "--version" => return run(&["version".to_string()], io),
@@ -211,8 +212,14 @@ pub fn run(args: &[String], io: &mut Io) -> i32 {
     }
     let rest = &args[1..];
     let Some(verb) = verbs::find(first) else {
+        if let Some(path) = crate::ext::lookup(first) {
+            return crate::ext::run(&path, rest, io.stdout, io.stdout_tty, io.style, io.stderr);
+        }
         let mut d = Diag::new(io.stderr);
-        d.error(Loc::none(), format!("unknown verb {first}: run `nessie --help` for the list"));
+        d.error(
+            Loc::none(),
+            format!("unknown verb {first}: not built in, and no nessie-{first} on PATH (see nessie help)"),
+        );
         return exit::USAGE;
     };
     if rest.len() == 1 && rest[0] == "--describe" {
@@ -250,12 +257,83 @@ pub fn run(args: &[String], io: &mut Io) -> i32 {
     }
     let mut t = crate::table::Tables::new(verb.name == "merge");
     for line in buf.split(|b| *b == b'\n').filter(|l| !l.is_empty()) {
-        t.line(line).expect("nessie's own records are JSON objects");
+        if t.line(line).is_err() {
+            t.raw(line); // help text, from `nessie help <verb>`
+        }
     }
     match io.stdout.write_all(t.render(io.style).as_bytes()) {
         Ok(()) => code,
         Err(_) => code.max(exit::PROBLEMS),
     }
+}
+
+/// cobra's completion directives, as rpt uses them.
+const COMPLETE_FILES: u8 = 0;
+const COMPLETE_NO_FILES: u8 = 4;
+
+/// Shell completion in cobra's format (rpt's protocol): candidates one per
+/// line, `name\tdescription` when `desc`, then `:directive`. The last
+/// argument is the word being completed. An extension's own arguments are
+/// completed by asking it.
+fn complete(words: &[String], desc: bool, io: &mut Io) -> i32 {
+    let cur = words.last().map_or("", String::as_str);
+    let mut cands: Vec<(String, String)> = Vec::new();
+    let directive = match words {
+        [] | [_] => {
+            for v in verbs::ALL {
+                cands.push((v.name.to_string(), v.summary.to_string()));
+            }
+            for (name, _) in crate::ext::discover() {
+                if verbs::find(&name).is_none() {
+                    cands.push((name, "extension".into()));
+                }
+            }
+            COMPLETE_NO_FILES
+        }
+        [verb, ..] => match verbs::find(verb) {
+            Some(v) => {
+                let prev = words.len().checked_sub(2).map(|i| words[i].as_str());
+                if prev == Some("--min-severity") {
+                    for (n, d) in
+                        ["0 info", "1 low", "2 medium", "3 high", "4 critical"].map(|s| s.split_once(' ').unwrap())
+                    {
+                        cands.push((n.into(), d.into()));
+                    }
+                    COMPLETE_NO_FILES
+                } else if cur.starts_with('-') {
+                    for f in v.flags.iter().chain([&JSON, &HELP]) {
+                        cands.push((format!("--{}", f.name), f.help.into()));
+                    }
+                    COMPLETE_NO_FILES
+                } else if v.name == "help" {
+                    if words.len() == 2 {
+                        for v in verbs::ALL {
+                            cands.push((v.name.to_string(), v.summary.to_string()));
+                        }
+                    }
+                    COMPLETE_NO_FILES
+                } else if v.input.is_some() && v.name != "table" {
+                    COMPLETE_FILES
+                } else {
+                    COMPLETE_NO_FILES
+                }
+            }
+            None => {
+                let Some(path) = crate::ext::lookup(verb) else {
+                    return print(io, &format!(":{COMPLETE_NO_FILES}\n"));
+                };
+                let mut fwd = vec![if desc { "__complete" } else { "__completeNoDesc" }.to_string()];
+                fwd.extend(words[1..].iter().cloned());
+                return crate::ext::run(&path, &fwd, io.stdout, false, io.style, io.stderr);
+            }
+        },
+    };
+    let mut out = String::new();
+    for (name, d) in cands.into_iter().filter(|(n, _)| n.starts_with(cur)) {
+        out += &if desc && !d.is_empty() { format!("{name}\t{d}\n") } else { format!("{name}\n") };
+    }
+    out += &format!(":{directive}\n");
+    print(io, &out)
 }
 
 #[cfg(test)]

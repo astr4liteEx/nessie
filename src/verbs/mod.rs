@@ -6,6 +6,7 @@ use crate::inputs::{self, Format};
 use std::io::{BufRead, Write};
 
 mod diff;
+mod help;
 mod hosts;
 mod items;
 mod merge;
@@ -107,6 +108,18 @@ pub static ALL: &[Verb] = &[
                 as JSON. problem records are printed on stderr as text. Off a terminal, or with --json,\n\
                 lines pass through unchanged.",
         run: table::run,
+    },
+    Verb {
+        name: "help",
+        summary: "List the built-in verbs and the extensions on PATH; with a verb, show its help",
+        usage: "nessie help [verb]",
+        input: None,
+        output: Some("records"),
+        roles: &[],
+        flags: &[],
+        notes: "Lists command records, as rpt help does: source is builtin or extension, and an\n\
+                extension named like a built-in has shadowed: true (the built-in always runs).",
+        run: help::run,
     },
     Verb {
         name: "version",

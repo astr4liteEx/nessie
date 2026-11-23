@@ -1,0 +1,11 @@
+#!/bin/sh
+# Test extension: one scope record naming its directory and arguments.
+case "$1" in
+--describe) echo '{"summary":"Echo for tests","usage":"nessie echo [args]","version":"9.9.9","output":"records"}'; exit 0 ;;
+__complete) echo "from-echo	a candidate"; echo ":4"; exit 0 ;;
+esac
+printf '{"kind":"scope","id":"1","host":"a %s"}\n' "$*"
+printf '{"kind":"problem","path":"-","rule":"readable","level":"error","message":"dropped from tables"}\n'
+echo "NESSIE_BIN=$NESSIE_BIN" >&2
+[ -n "$ECHO_STDIN" ] && cat
+exit "${ECHO_EXIT:-0}"

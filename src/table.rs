@@ -233,6 +233,11 @@ impl Tables {
         Self { group_results, groups: Vec::new(), others: Vec::new(), problems: Vec::new() }
     }
 
+    /// Adds a line that isn't a record (a verb's help text), shown as it is.
+    pub fn raw(&mut self, raw: &[u8]) {
+        self.others.push(String::from_utf8_lossy(raw).into_owned());
+    }
+
     /// Adds one line of input. Err when it isn't a JSON object.
     pub fn line(&mut self, raw: &[u8]) -> Result<(), String> {
         let v: Value = serde_json::from_slice(raw).map_err(|e| format!("invalid JSON: {e}"))?;
@@ -515,8 +520,16 @@ fn scope(recs: &[Value], st: Style) -> String {
 }
 
 fn commands(recs: &[Value], st: Style) -> String {
-    let rows: Vec<Vec<Cell>> =
-        recs.iter().map(|r| vec![plain(s(r, "name")), plain(s(r, "source")), plain(s(r, "summary"))]).collect();
+    let rows: Vec<Vec<Cell>> = recs
+        .iter()
+        .map(|r| {
+            let mut source = s(r, "source").to_string();
+            if r.get("shadowed") == Some(&Value::Bool(true)) {
+                source += " (shadowed)";
+            }
+            vec![plain(s(r, "name")), plain(source), plain(s(r, "summary"))]
+        })
+        .collect();
     draw(&["Verb", "Source", "Summary"], &rows, Some(2), st)
 }
 

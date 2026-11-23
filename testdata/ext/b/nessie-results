@@ -1,0 +1,4 @@
+#!/bin/sh
+# Test extension named like a built-in: shadowed.
+[ "$1" = --describe ] && echo '{"summary":"A shadowed results"}' && exit 0
+echo shadow

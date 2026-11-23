@@ -1,0 +1,5 @@
+#!/bin/sh
+# Test extension that waits to be signalled.
+[ "$1" = --describe ] && echo '{"summary":"Waits"}' && exit 0
+echo ready >&2
+exec sleep 30

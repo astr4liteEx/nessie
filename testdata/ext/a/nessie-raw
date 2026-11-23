@@ -1,0 +1,4 @@
+#!/bin/sh
+# Test extension whose --describe has no output: never wrapped.
+[ "$1" = --describe ] && echo '{"summary":"Draws its own output"}' && exit 0
+printf '{"kind":"scope","id":"1","host":"raw"}\n'
