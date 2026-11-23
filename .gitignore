@@ -1,3 +1,4 @@
+target/
 dist/
 
 # Private agent and planning files
