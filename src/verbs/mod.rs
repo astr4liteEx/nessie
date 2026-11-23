@@ -6,6 +6,7 @@ use crate::inputs::{self, Format};
 use std::io::{BufRead, Write};
 
 mod hosts;
+mod items;
 mod results;
 mod scan;
 mod version;
@@ -54,8 +55,11 @@ pub static ALL: &[Verb] = &[
         output: Some("records"),
         roles: &["source", "filter"],
         flags: &[OUTPUT, MIN_SEVERITY],
-        notes: "",
-        run: not_built,
+        notes: "Reads .nessus scans or a nessus-result stream; other records pass through unchanged.\n\
+                Holds every Item until the end of input: with --output, memory grows with the output\n\
+                text, so filter or use --min-severity first. An Item whose line would pass 16 MiB\n\
+                is split into parts (a `part` member); merge them by plugin_id.",
+        run: items::run,
     },
     Verb {
         name: "merge",
@@ -119,14 +123,14 @@ pub fn parse_options(args: &Args) -> Result<crate::nessus::Options, String> {
     Ok(crate::nessus::Options { output: args.has("output"), min_severity, read_policy: false })
 }
 
-/// Runs `each` over every input named on the command line that holds XML.
-/// `each` gets the input's name, the open input, stdout and the Diag, and
-/// returns false to stop (stdout was closed). Returns the exit code.
-pub fn each_scan(
+/// Runs `each` over every input named on the command line, sniffed. `each`
+/// gets the input's name, the open input, its format, stdout and the Diag,
+/// and returns false to stop (stdout was closed). Returns the exit code.
+pub fn each_input(
     args: &Args,
     ctx: &mut Ctx,
     verb: &str,
-    mut each: impl FnMut(&str, &mut dyn BufRead, &mut dyn Write, &mut Diag) -> bool,
+    mut each: impl FnMut(&str, &mut dyn BufRead, Format, &mut dyn Write, &mut Diag) -> bool,
 ) -> i32 {
     let names = match inputs::names(&args.positional, ctx) {
         Ok(n) => n,
@@ -140,34 +144,46 @@ pub fn each_scan(
                 continue;
             }
         };
-        match inputs::sniff(&mut src) {
-            Ok(Format::Xml) => {}
-            Ok(Format::Jsonl) => {
-                ctx.diag.error(
-                    Loc::path(name),
-                    format!("this is a JSON Lines stream, not a .nessus scan: {verb} reads the scan itself"),
-                );
-                continue;
-            }
-            Ok(Format::Empty) => {
-                ctx.diag.error(Loc::path(name), "not a Nessus scan: the input is empty");
-                continue;
-            }
+        let format = match inputs::sniff(&mut src) {
             Ok(Format::Other(b)) => {
                 let hint = if b == b'P' || b == 0x1f { " (compressed? pipe it through zcat or unzip -p)" } else { "" };
-                ctx.diag.error(Loc::path(name), format!("not a Nessus scan: it doesn't start with <{hint}"));
+                ctx.diag.error(Loc::path(name), format!("neither a .nessus scan nor JSON Lines{hint}"));
                 continue;
             }
+            Ok(f) => f,
             Err(e) => {
                 ctx.diag.error(Loc::path(name), format!("can't read: {e}"));
                 continue;
             }
-        }
-        if !each(name, &mut src, &mut *ctx.stdout, &mut ctx.diag) {
+        };
+        if !each(name, &mut src, format, &mut *ctx.stdout, &mut ctx.diag) {
             break;
         }
     }
     ctx.diag.code()
+}
+
+/// Like `each_input`, for verbs that read only XML: other inputs are errors.
+pub fn each_scan(
+    args: &Args,
+    ctx: &mut Ctx,
+    verb: &str,
+    mut each: impl FnMut(&str, &mut dyn BufRead, &mut dyn Write, &mut Diag) -> bool,
+) -> i32 {
+    each_input(args, ctx, verb, |name, src, format, w, diag| match format {
+        Format::Xml => each(name, src, w, diag),
+        Format::Jsonl => {
+            diag.error(
+                Loc::path(name),
+                format!("this is a JSON Lines stream, not a .nessus scan: {verb} reads the scan itself"),
+            );
+            true
+        }
+        _ => {
+            diag.error(Loc::path(name), "not a Nessus scan: the input is empty");
+            true
+        }
+    })
 }
 
 /// Reports a usage error found by a verb and returns exit 2.

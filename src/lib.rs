@@ -9,6 +9,7 @@ mod inputs;
 pub mod jsonl;
 pub mod nessus;
 mod records;
+mod stream;
 mod verbs;
 
 use std::io::{BufRead, Write};
