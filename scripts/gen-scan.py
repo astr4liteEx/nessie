@@ -5,8 +5,8 @@ Usage:  python3 -I scripts/gen-scan.py --mb 400 [--hosts 2000] [--inventory-kb 0
 
 The shape follows testdata/scans/pro-10.nessus. Every value is invented
 (192.0.2.0/24-style documentation addresses, example.test names). The Policy
-section is padded to about --policy-share of the file (0.6, as in the owner's
-real scan). With --inventory-kb N, each Host also gets one inventory Result
+section is padded to about --policy-share of the file (0.6 by default: in
+real exports the Policy is often most of the file). With --inventory-kb N, each Host also gets one inventory Result
 (Nessus plugin 22869) with N KB of output, which with enough Hosts pushes an
 `items --output` record past 16 MiB so it has to split into parts.
 
