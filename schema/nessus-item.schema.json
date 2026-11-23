@@ -82,6 +82,25 @@
         ],
         "additionalProperties": true
       }
+    },
+    "part": {
+      "type": "object",
+      "description": "Present only when an Item with --output would pass the 16 MiB line cap and was split. Each part carries a whole subset of the Hosts and repeats the plugin fields; merge parts by plugin_id to rebuild the Item.",
+      "properties": {
+        "index": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 2
+        }
+      },
+      "required": [
+        "index",
+        "count"
+      ],
+      "additionalProperties": true
     }
   },
   "required": [
