@@ -1,0 +1,13 @@
+dist/
+
+# Private agent and planning files
+.scratch/
+CLAUDE.md
+docs/agents/
+docs/adr/
+prototypes/
+.claude/
+
+# Real scans are client data; only hand-written fixtures are committed
+*.nessus
+!testdata/**/*.nessus

@@ -1,0 +1,166 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/astr4liteEx/nessie/schema/nessus-result.schema.json",
+  "title": "nessie result record",
+  "description": "One Result: one Nessus plugin's output for one Host, port and protocol. The base stream, lossless over the ReportItem. Draft (2026-11-23), schema version 1.",
+  "type": "object",
+  "properties": {
+    "kind": {
+      "const": "nessus-result"
+    },
+    "schema_version": {
+      "const": 1,
+      "description": "Counted per kind. A reader refuses a version it doesn't know."
+    },
+    "scan": {
+      "$ref": "#/$defs/scan"
+    },
+    "host": {
+      "$ref": "#/$defs/host"
+    },
+    "port": {
+      "$ref": "#/$defs/port"
+    },
+    "protocol": {
+      "$ref": "#/$defs/protocol"
+    },
+    "svc_name": {
+      "type": "string"
+    },
+    "severity": {
+      "$ref": "#/$defs/severity"
+    },
+    "plugin_id": {
+      "type": "integer",
+      "description": "The Nessus plugin ID (pluginID)."
+    },
+    "plugin_name": {
+      "type": "string",
+      "description": "pluginName; changes between feed versions, never a key."
+    },
+    "plugin_family": {
+      "type": "string"
+    },
+    "elements": {
+      "$ref": "#/$defs/elements"
+    },
+    "plugin_output": {
+      "$ref": "#/$defs/plugin_output"
+    },
+    "diff": {
+      "type": "object",
+      "description": "Set by nessie diff only. The record is the new side for new and present, the old side for fixed and host-missing.",
+      "properties": {
+        "state": {
+          "enum": [
+            "new",
+            "fixed",
+            "present",
+            "host-missing"
+          ],
+          "description": "new: only in the new input. fixed: only in the old input, on a Host the new input has. present: in both. host-missing: only in the old input, on a Host absent from the new input."
+        },
+        "changed": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "severity",
+              "plugin_name",
+              "elements",
+              "plugin_output"
+            ]
+          },
+          "description": "On present only: which members differ. plugin_output only when both sides have it."
+        }
+      },
+      "required": [
+        "state"
+      ],
+      "additionalProperties": true
+    }
+  },
+  "required": [
+    "kind",
+    "schema_version",
+    "scan",
+    "host",
+    "port",
+    "protocol",
+    "svc_name",
+    "severity",
+    "plugin_id",
+    "plugin_name",
+    "plugin_family",
+    "elements"
+  ],
+  "additionalProperties": true,
+  "$defs": {
+    "host": {
+      "type": "object",
+      "description": "A Host's identity as the scan gives it. Each member is present only when the scan has it; nessie computes no single identity.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "ReportHost@name: an IP, an FQDN or an agent name."
+        },
+        "ip": {
+          "type": "string",
+          "description": "The host-ip tag."
+        },
+        "fqdn": {
+          "type": "string",
+          "description": "The host-fqdn tag."
+        }
+      },
+      "additionalProperties": true
+    },
+    "scan": {
+      "type": "object",
+      "description": "Which scan a record came from. Records read on stdin keep the scan member they arrived with.",
+      "properties": {
+        "file": {
+          "type": "string",
+          "description": "The path as given on the command line, or - for stdin."
+        },
+        "name": {
+          "type": "string",
+          "description": "Report@name, when present."
+        }
+      },
+      "required": [
+        "file"
+      ],
+      "additionalProperties": true
+    },
+    "elements": {
+      "type": "object",
+      "description": "Every ReportItem child element except plugin_output, keyed by its verbatim name (cm: prefix kept). Values are always arrays of trimmed strings: a repeated element appends, and the newline-joined cpe and see_also are split into items.",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "port": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 65535,
+      "description": "0 means a host-level Result."
+    },
+    "protocol": {
+      "type": "string",
+      "description": "tcp, udp or icmp, verbatim."
+    },
+    "severity": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 4,
+      "description": "Nessus's raw severity, 0-4. No name: Nessus 4.2 marks informational Results 1."
+    },
+    "plugin_output": {
+      "type": "string",
+      "description": "Verbatim, untrimmed. Present only under --output and when the Result has one. A Tenable VM truncation marker (***TRUNCATED***) stays in the text."
+    }
+  }
+}

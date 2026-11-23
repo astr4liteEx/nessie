@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/astr4liteEx/nessie/schema/nessus-scan.schema.json",
+  "title": "nessie scan record",
+  "description": "One scan's summary: its names, server preferences, counts and scanner version. Draft (2026-11-23), schema version 1.",
+  "type": "object",
+  "properties": {
+    "kind": {
+      "const": "nessus-scan"
+    },
+    "schema_version": {
+      "const": 1,
+      "description": "Counted per kind. A reader refuses a version it doesn't know."
+    },
+    "scan": {
+      "$ref": "nessus-result.schema.json#/$defs/scan"
+    },
+    "name": {
+      "type": "string",
+      "description": "Report@name."
+    },
+    "policy_name": {
+      "type": "string",
+      "description": "Policy/policyName."
+    },
+    "server_preferences": {
+      "type": "object",
+      "description": "Every ServerPreferences preference, name to value, verbatim (plugin_set included). PluginsPreferences and the family and Nessus plugin selection are not emitted.",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "hosts": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "results": {
+      "type": "object",
+      "description": "Result counts by raw severity, keyed \"0\" to \"4\", plus total.",
+      "properties": {
+        "total": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": {
+        "type": "integer"
+      }
+    },
+    "nessus_version": {
+      "type": "string",
+      "description": "From the first Nessus plugin 19506 Result's 'Nessus version :' line; absent without one. The one exception to parsing plugin_output."
+    },
+    "feed_version": {
+      "type": "string",
+      "description": "From the same Result's 'Plugin feed version :' line."
+    }
+  },
+  "required": [
+    "kind",
+    "schema_version",
+    "scan",
+    "hosts",
+    "results"
+  ],
+  "additionalProperties": true
+}

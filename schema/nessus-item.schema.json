@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/astr4liteEx/nessie/schema/nessus-item.schema.json",
+  "title": "nessie item record",
+  "description": "One Item: all of one Nessus plugin's Results in the input, grouped by Host and endpoint. Draft (2026-11-23), schema version 1.",
+  "type": "object",
+  "properties": {
+    "kind": {
+      "const": "nessus-item"
+    },
+    "schema_version": {
+      "const": 1,
+      "description": "Counted per kind. A reader refuses a version it doesn't know."
+    },
+    "scan": {
+      "type": "array",
+      "items": {
+        "$ref": "nessus-result.schema.json#/$defs/scan"
+      },
+      "description": "Every scan the Item's Results came from."
+    },
+    "plugin_id": {
+      "type": "integer"
+    },
+    "plugin_name": {
+      "type": "string",
+      "description": "From the first Result seen."
+    },
+    "plugin_family": {
+      "type": "string"
+    },
+    "severity": {
+      "$ref": "nessus-result.schema.json#/$defs/severity",
+      "description": "The highest severity across the Item's Results."
+    },
+    "elements": {
+      "$ref": "nessus-result.schema.json#/$defs/elements",
+      "description": "The union across the Item's Results, values de-duplicated in first-seen order."
+    },
+    "hosts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "host": {
+            "$ref": "nessus-result.schema.json#/$defs/host"
+          },
+          "endpoints": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "port": {
+                  "$ref": "nessus-result.schema.json#/$defs/port"
+                },
+                "protocol": {
+                  "$ref": "nessus-result.schema.json#/$defs/protocol"
+                },
+                "svc_name": {
+                  "type": "string"
+                },
+                "severity": {
+                  "$ref": "nessus-result.schema.json#/$defs/severity"
+                },
+                "plugin_output": {
+                  "$ref": "nessus-result.schema.json#/$defs/plugin_output"
+                }
+              },
+              "required": [
+                "port",
+                "protocol",
+                "svc_name",
+                "severity"
+              ],
+              "additionalProperties": true
+            }
+          }
+        },
+        "required": [
+          "host",
+          "endpoints"
+        ],
+        "additionalProperties": true
+      }
+    }
+  },
+  "required": [
+    "kind",
+    "schema_version",
+    "scan",
+    "plugin_id",
+    "plugin_name",
+    "plugin_family",
+    "severity",
+    "elements",
+    "hosts"
+  ],
+  "additionalProperties": true
+}

@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/astr4liteEx/nessie/schema/nessus-service.schema.json",
+  "title": "nessie service record",
+  "description": "One Service: a Host, port and protocol where any Result has a port other than 0. Emitted by the starter services extension, owned by nessie. Draft (2026-11-23), schema version 1.",
+  "type": "object",
+  "properties": {
+    "kind": {
+      "const": "nessus-service"
+    },
+    "schema_version": {
+      "const": 1,
+      "description": "Counted per kind. A reader refuses a version it doesn't know."
+    },
+    "scan": {
+      "$ref": "nessus-result.schema.json#/$defs/scan"
+    },
+    "host": {
+      "$ref": "nessus-result.schema.json#/$defs/host"
+    },
+    "port": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 65535
+    },
+    "protocol": {
+      "$ref": "nessus-result.schema.json#/$defs/protocol"
+    },
+    "svc_name": {
+      "type": "string",
+      "description": "22964's svc_name when it fired on this port; otherwise the most common, a name ending in ? losing to one without."
+    },
+    "plugin_ids": {
+      "type": "array",
+      "items": {
+        "type": "integer"
+      },
+      "description": "The Nessus plugin IDs that fired on this endpoint."
+    }
+  },
+  "required": [
+    "kind",
+    "schema_version",
+    "scan",
+    "host",
+    "port",
+    "protocol",
+    "svc_name",
+    "plugin_ids"
+  ],
+  "additionalProperties": true
+}
