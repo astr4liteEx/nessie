@@ -69,6 +69,23 @@ pub struct ReportItem {
 }
 
 /// Called as `parse` walks a scan. Every method has an empty default.
+/// Nessus's severities by number, as people say them.
+pub const SEVERITY_NAMES: [&str; 5] = ["info", "low", "medium", "high", "critical"];
+
+/// A severity's name; numbers above 4 count as critical.
+pub fn severity_name(sev: u8) -> &'static str {
+    SEVERITY_NAMES[usize::from(sev.min(4))]
+}
+
+/// A severity given as 0-4 or as its name (any case).
+pub fn parse_severity(s: &str) -> Option<u8> {
+    let s = s.trim();
+    s.parse::<u8>()
+        .ok()
+        .filter(|n| *n <= 4)
+        .or_else(|| SEVERITY_NAMES.iter().position(|n| n.eq_ignore_ascii_case(s)).map(|i| i as u8))
+}
+
 pub trait Visitor {
     /// The Policy, when Options::read_policy is set.
     fn policy(&mut self, _policy: Policy) {}

@@ -12,7 +12,7 @@ Type "nessie scan this.nessus"
 Sleep 300ms
 Enter
 Sleep 3s
-Type "nessie items --min-severity 2 this.nessus"
+Type "nessie items --min-severity medium this.nessus"
 Sleep 300ms
 Enter
 Sleep 4.5s

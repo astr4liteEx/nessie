@@ -26,7 +26,7 @@ fn every_built_in_describes_itself() {
 fn help_lists_flags_and_exits_zero() {
     let r = run(&["results", "--help"], b"");
     assert_eq!(r.code, 0);
-    assert!(r.stdout.contains("--min-severity N"));
+    assert!(r.stdout.contains("--min-severity S"));
     assert!(r.stdout.contains("--json"));
     let r = run(&["--help"], b"");
     assert_eq!(r.code, 0);

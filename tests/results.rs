@@ -54,4 +54,9 @@ fn reads_xml_from_stdin() {
     assert_eq!(lines(&r.stdout)[0]["scan"]["file"], "-");
     assert_eq!(run(&["results", "-", "-"], b"").code, 2);
     assert_eq!(run(&["results", "--min-severity", "5", "x"], b"").code, 2);
+    assert_eq!(run(&["results", "--min-severity", "severe", "x"], b"").code, 2);
+    // A name and its number are the same filter.
+    let by_name = run(&["results", "--min-severity", "Medium", &format!("{SCANS}/pro-10.nessus")], b"");
+    let by_number = run(&["results", "--min-severity", "2", &format!("{SCANS}/pro-10.nessus")], b"");
+    assert_eq!(by_name.stdout, by_number.stdout);
 }

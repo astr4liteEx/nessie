@@ -20,7 +20,7 @@ pub static ALL: &[Verb] = &[
     Verb {
         name: "results",
         summary: "Emit one record per Result in .nessus scans",
-        usage: "nessie results [--output] [--min-severity N] <scan.nessus>... | -",
+        usage: "nessie results [--output] [--min-severity S] <scan.nessus>... | -",
         input: Some("xml/nessus"),
         output: Some("records"),
         roles: &["source"],
@@ -54,7 +54,7 @@ pub static ALL: &[Verb] = &[
     Verb {
         name: "items",
         summary: "Group Results by Nessus plugin",
-        usage: "nessie items [--output] [--min-severity N] [<scan.nessus>... | -]",
+        usage: "nessie items [--output] [--min-severity S] [<scan.nessus>... | -]",
         input: Some("xml/nessus"),
         output: Some("records"),
         roles: &["source", "filter"],
@@ -68,7 +68,7 @@ pub static ALL: &[Verb] = &[
     Verb {
         name: "merge",
         summary: "Merge scans or Result streams; the later input wins",
-        usage: "nessie merge [--output] [--min-severity N] [<scan.nessus|results.jsonl>... | -]",
+        usage: "nessie merge [--output] [--min-severity S] [<scan.nessus|results.jsonl>... | -]",
         input: Some("xml/nessus"),
         output: Some("records"),
         roles: &["source", "filter"],
@@ -82,7 +82,7 @@ pub static ALL: &[Verb] = &[
     Verb {
         name: "diff",
         summary: "Compare two scans: new, fixed, present and host-missing Results",
-        usage: "nessie diff [--output] [--min-severity N] <old> <new>",
+        usage: "nessie diff [--output] [--min-severity S] <old> <new>",
         input: Some("xml/nessus"),
         output: Some("records"),
         roles: &["source"],
@@ -143,9 +143,10 @@ pub fn find(name: &str) -> Option<&'static Verb> {
 pub fn parse_options(args: &Args) -> Result<crate::nessus::Options, String> {
     let min_severity = match args.value("min-severity") {
         None => None,
-        Some(v) => {
-            Some(v.parse::<u8>().ok().filter(|n| *n <= 4).ok_or_else(|| format!("--min-severity {v:?} is not 0-4"))?)
-        }
+        Some(v) => Some(
+            crate::nessus::parse_severity(v)
+                .ok_or_else(|| format!("--min-severity {v:?} is not 0-4 or info, low, medium, high, critical"))?,
+        ),
     };
     Ok(crate::nessus::Options { output: args.has("output"), min_severity, read_policy: false })
 }

@@ -26,8 +26,8 @@ Flags (each takes a comma list matched with OR; flags combine with AND):
   --port <ports>          ports
   --protocol <names>      tcp, udp, icmp
   --cve <ids>             CVE IDs in the Result's cve elements
-  --min-severity <0-4>    severity at least this
-  --max-severity <0-4>    severity at most this
+  --min-severity <sev>    severity at least this: info, low, medium, high, critical, or 0-4
+  --max-severity <sev>    severity at most this
   --exploit-available     only Results whose exploit_available is true
   --where <jq>            a jq expression run on each Result; kept when true
   --output                with scans, include plugin_output
@@ -96,7 +96,10 @@ while (($#)); do
 	--protocol) c[protocol]=$(list "$arg" "$val" '[A-Za-z]+') || exit ;;
 	--cve) c[cve]=$(list "$arg" "$val" '[A-Za-z0-9-]+') || exit ;;
 	--min-severity | --max-severity)
-		[[ $val =~ ^[0-4]$ ]] || fail 2 "$arg: '$val' is not 0 to 4"
+		case ${val,,} in
+		info) val=0 ;; low) val=1 ;; medium) val=2 ;; high) val=3 ;; critical) val=4 ;;
+		esac
+		[[ $val =~ ^[0-4]$ ]] || fail 2 "$arg: '$val' is not info, low, medium, high, critical or 0-4"
 		k=${arg#--}
 		c[${k/-/_}]=$val
 		;;

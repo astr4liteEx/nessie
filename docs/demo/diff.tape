@@ -8,7 +8,7 @@ Type "export PATH=/tmp/nessie-demo/bin:/usr/bin:/bin; PS1='$ '; set -o pipefail;
 Enter
 Show
 
-Type "nessie diff --min-severity 3 last.nessus this.nessus"
+Type "nessie diff --min-severity high last.nessus this.nessus"
 Sleep 300ms
 Enter
 Sleep 4s

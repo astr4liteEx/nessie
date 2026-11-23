@@ -1,12 +1,12 @@
-╭─────┬────────┬────────────────────────────────────┬───────┬───────────╮
-│ Sev │ Plugin │ Name                               │ Hosts │ Endpoints │
-├─────┼────────┼────────────────────────────────────┼───────┼───────────┤
-│ 4   │ 201010 │ Fixture Critical SMB Flaw          │ 1     │ 1         │
-│ 3   │ 57582  │ SSL Self-Signed Certificate        │ 1     │ 1         │
-│ 3   │ 156899 │ Fixture Web Server Outdated        │ 1     │ 1         │
-│ 2   │ 104743 │ TLS Version 1.0 Protocol Detection │ 1     │ 1         │
-│ 0   │ 10107  │ HTTP Server Type and Version       │ 1     │ 1         │
-│ 0   │ 10335  │ Nessus TCP scanner                 │ 1     │ 1         │
-│ 0   │ 19506  │ Nessus Scan Information            │ 1     │ 1         │
-╰─────┴────────┴────────────────────────────────────┴───────┴───────────╯
-7 results · 4 1 · 3 2 · 2 1 · 0 3
+╭──────────┬────────┬────────────────────────────────────┬───────┬───────────╮
+│ Severity │ Plugin │ Name                               │ Hosts │ Endpoints │
+├──────────┼────────┼────────────────────────────────────┼───────┼───────────┤
+│ critical │ 201010 │ Fixture Critical SMB Flaw          │ 1     │ 1         │
+│ high     │ 57582  │ SSL Self-Signed Certificate        │ 1     │ 1         │
+│ high     │ 156899 │ Fixture Web Server Outdated        │ 1     │ 1         │
+│ medium   │ 104743 │ TLS Version 1.0 Protocol Detection │ 1     │ 1         │
+│ info     │ 10107  │ HTTP Server Type and Version       │ 1     │ 1         │
+│ info     │ 10335  │ Nessus TCP scanner                 │ 1     │ 1         │
+│ info     │ 19506  │ Nessus Scan Information            │ 1     │ 1         │
+╰──────────┴────────┴────────────────────────────────────┴───────┴───────────╯
+7 results · critical 1 · high 2 · medium 1 · info 3

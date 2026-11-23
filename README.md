@@ -65,14 +65,14 @@ cargo install --git https://github.com/astr4liteEx/nessie --tag v0.1.0 --locked
 
 ```sh
 nessie scan scan.nessus                      # what the scan is: names, versions, counts
-nessie items --min-severity 2 scan.nessus    # medium and above, one row per Nessus plugin
+nessie items --min-severity medium scan.nessus    # medium and above, one row per Nessus plugin
 nessie results scan.nessus | jq -c 'select(.severity >= 3)' | nessie items
 ```
 
 On a terminal each command prints a table; piped, it prints JSON Lines. Add `--json` to get JSON on a terminal too.
 
 > [!TIP]
-> Most of a big scan is informational Results. `--min-severity 1` drops them while reading, before anything else sees them.
+> Most of a big scan is informational Results. `--min-severity low` drops them while reading, before anything else sees them.
 
 ## Commands
 
@@ -99,11 +99,11 @@ zcat scan.nessus.gz | nessie results
 unzip -p export.zip scan.nessus | nessie scan
 ```
 
-**Flags.** `--output` adds each Result's `plugin_output` (on `results`, `items`, `merge` and `diff`). `--min-severity 0-4` drops lower Results while reading. `--json` prints JSON Lines on a terminal. Every verb takes `--help` and `--describe`.
+**Flags.** `--output` adds each Result's `plugin_output` (on `results`, `items`, `merge` and `diff`). `--min-severity` drops lower Results while reading; it takes `info`, `low`, `medium`, `high` or `critical`, or Nessus's numbers 0 to 4. `--json` prints JSON Lines on a terminal. Every verb takes `--help` and `--describe`.
 
 **Exit codes.** 0 when all went well; 1 when the input had problems, reported on stderr with file and line while nessie carries on with the next record or file; 2 for usage errors. `diff` exits 0 whatever changed: test its output with `jq -e`.
 
-**Tables.** On a terminal, records show as tables sorted most severe first, following `NO_COLOR` and `TERM=dumb`.
+**Tables.** On a terminal, records show as tables sorted most severe first, with severities named and coloured, following `NO_COLOR` and `TERM=dumb`.
 
 ### Comparing scans
 
@@ -137,7 +137,7 @@ Every record has `kind` and `schema_version`; the schemas are in [`schema/`](sch
  "plugin_output":"..."}
 ```
 
-- `severity` is Nessus's own 0 to 4 (info, low, medium, high, critical).
+- `severity` is Nessus's own number, 0 to 4: info, low, medium, high and critical. Tables show the names; records keep the number, so `jq 'select(.severity >= 3)'` means high and above.
 - `elements` holds every child element of the ReportItem as a list of strings: repeated elements (`cve`, `bid`, `xref`) collect, and `cpe` and `see_also` split on newlines.
 - `host.fqdn` and `host.ip` come from the `host-fqdn` and `host-ip` tags, when present.
 - `merge` and `diff` match Hosts on fqdn, then ip, then name, and Results on Host, `plugin_id`, `port` and `protocol`.

@@ -5,6 +5,7 @@
 //! Tables are only ever drawn from records already written as JSON Lines,
 //! so what a pipe gets and what a terminal shows can't drift apart.
 
+use crate::nessus::severity_name;
 use serde_json::Value;
 use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
 
@@ -163,7 +164,7 @@ fn port(v: &Value) -> String {
 }
 
 fn sev_cell(sev: u8) -> Cell {
-    Cell { text: sev.to_string(), paint: Paint::Severity(sev) }
+    Cell { text: severity_name(sev).into(), paint: Paint::Severity(sev) }
 }
 
 fn sev(v: &Value) -> u8 {
@@ -184,8 +185,8 @@ fn plural(count: usize, noun: &str) -> String {
     format!("{count} {noun}{}", if count == 1 { "" } else { "s" })
 }
 
-/// "14 results · 4 1 · 3 1 · 2 4 · 0 8": a count, then each severity with
-/// any, highest first.
+/// "14 results · critical 1 · high 1 · medium 4 · info 8": a count, then
+/// each severity with any, highest first.
 fn severity_totals(st: Style, count: usize, noun: &str, sevs: impl Iterator<Item = u8>) -> String {
     let mut by = [0usize; 5];
     for s in sevs {
@@ -194,7 +195,8 @@ fn severity_totals(st: Style, count: usize, noun: &str, sevs: impl Iterator<Item
     let mut parts = vec![sgr(st, "2", &plural(count, noun))];
     for s in (0..5u8).rev() {
         if by[usize::from(s)] > 0 {
-            parts.push(sgr(st, severity_code(s), &s.to_string()) + &sgr(st, "2", &format!(" {}", by[usize::from(s)])));
+            parts
+                .push(sgr(st, severity_code(s), severity_name(s)) + &sgr(st, "2", &format!(" {}", by[usize::from(s)])));
         }
     }
     parts.join(&sgr(st, "2", " · ")) + "\n"
@@ -320,7 +322,7 @@ fn results(recs: &[Value], st: Style) -> String {
             ]
         })
         .collect();
-    draw(&["Host", "Port", "Sev", "Plugin", "Name"], &rows, Some(4), st)
+    draw(&["Host", "Port", "Severity", "Plugin", "Name"], &rows, Some(4), st)
         + &severity_totals(st, recs.len(), "result", recs.iter().map(sev))
 }
 
@@ -347,7 +349,7 @@ fn item_table(mut rows: Vec<ItemRow>, st: Style, footer: String) -> String {
             ]
         })
         .collect();
-    draw(&["Sev", "Plugin", "Name", "Hosts", "Endpoints"], &cells, Some(2), st) + &footer
+    draw(&["Severity", "Plugin", "Name", "Hosts", "Endpoints"], &cells, Some(2), st) + &footer
 }
 
 fn items(recs: &[Value], st: Style) -> String {
@@ -495,7 +497,7 @@ fn diff(recs: &[Value], st: Style) -> String {
             }
         }
     }
-    draw(&["State", "Host", "Port", "Sev", "Plugin", "Name", "Changed"], &rows, Some(5), st)
+    draw(&["State", "Host", "Port", "Severity", "Plugin", "Name", "Changed"], &rows, Some(5), st)
         + &parts.join(&sgr(st, "2", " · "))
         + "\n"
 }
@@ -550,9 +552,9 @@ mod tests {
         let r = json!({"kind":"nessus-result","host":{"name":"h"},"port":443,"protocol":"tcp","severity":2,
             "plugin_id":1,"plugin_name":"A very long plugin name that will not fit at all"});
         t.line(r.to_string().as_bytes()).unwrap();
-        let out = t.render(Style { color: false, width: 50 });
+        let out = t.render(Style { color: false, width: 60 });
         for l in out.lines().take(5) {
-            assert!(l.width() <= 50, "{l}");
+            assert!(l.width() <= 60, "{l}");
         }
         assert!(out.contains("443/tcp") && out.contains('…'), "{out}");
     }
@@ -575,7 +577,7 @@ mod tests {
         let r = json!({"kind":"nessus-result","host":{"name":"\u{1b}[31mx"},"port":0,"protocol":"tcp","severity":4,"plugin_id":1,"plugin_name":"n"});
         t.line(r.to_string().as_bytes()).unwrap();
         assert!(!t.render(PLAIN).contains('\x1b'));
-        assert!(t.render(Style { color: true, width: 0 }).contains("\x1b[1;31m4\x1b[0m"));
+        assert!(t.render(Style { color: true, width: 0 }).contains("\x1b[1;31mcritical\x1b[0m"));
     }
 
     #[test]

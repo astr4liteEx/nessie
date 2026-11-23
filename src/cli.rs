@@ -28,8 +28,8 @@ pub const OUTPUT: Flag =
 pub const MIN_SEVERITY: Flag = Flag {
     name: "min-severity",
     arity: Arity::Value,
-    value: "N",
-    help: "Drop Results below severity N (0-4) while parsing. Nessus 4.2 marks informational Results 1",
+    value: "S",
+    help: "Drop Results below severity S while parsing: info, low, medium, high, critical (or 0-4). Nessus 4.2 marks informational Results low",
 };
 const JSON: Flag = Flag { name: "json", arity: Arity::Bool, value: "", help: "Print JSON Lines even on a terminal" };
 const HELP: Flag = Flag { name: "help", arity: Arity::Bool, value: "", help: "Show this help" };
@@ -294,10 +294,8 @@ fn complete(words: &[String], desc: bool, io: &mut Io) -> i32 {
             Some(v) => {
                 let prev = words.len().checked_sub(2).map(|i| words[i].as_str());
                 if prev == Some("--min-severity") {
-                    for (n, d) in
-                        ["0 info", "1 low", "2 medium", "3 high", "4 critical"].map(|s| s.split_once(' ').unwrap())
-                    {
-                        cands.push((n.into(), d.into()));
+                    for (i, name) in crate::nessus::SEVERITY_NAMES.iter().enumerate().rev() {
+                        cands.push((name.to_string(), format!("severity {i}")));
                     }
                     COMPLETE_NO_FILES
                 } else if cur.starts_with('-') {

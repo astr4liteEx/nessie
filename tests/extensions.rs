@@ -110,8 +110,8 @@ fn completes_verbs_flags_files_and_forwards_to_extensions() {
     assert_eq!(stdout, "--output\tInclude each Result's plugin_output\n:4\n");
     let (_, stdout, _) = out(&nessie(&["a"], &["__complete", "results", ""]).output().unwrap());
     assert_eq!(stdout, ":0\n");
-    let (_, stdout, _) = out(&nessie(&["a"], &["__completeNoDesc", "items", "--min-severity", "3"]).output().unwrap());
-    assert_eq!(stdout, "3\n:4\n");
+    let (_, stdout, _) = out(&nessie(&["a"], &["__completeNoDesc", "items", "--min-severity", "h"]).output().unwrap());
+    assert_eq!(stdout, "high\n:4\n");
     let (_, stdout, _) = out(&nessie(&["a"], &["__complete", "echo", ""]).output().unwrap());
     assert_eq!(stdout, "from-echo\ta candidate\n:4\n");
 }
