@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+# nessie-services: one nessus-service record per Host, port and protocol any
+# Result was found on. Part of nessie (https://github.com/astr4liteEx/nessie);
+# needs bash and jq 1.7 or later.
+set -uo pipefail
+VERSION=0.0.0-dev # release.sh stamps the release's version
+NAME=nessie-services
+DIR=$(cd "$(dirname "$(readlink -f "$0")")" && pwd)
+LIB='include "nessie";' # release.sh inlines extensions/nessie.jq here
+
+describe() {
+	cat <<EOF
+{"summary":"List the services found: one record per Host, port and protocol","usage":"nessie services [scan.nessus...] (or a results stream on stdin)","version":"$VERSION","input":"records","output":"records","roles":["source"]}
+EOF
+}
+
+usage() {
+	cat <<'EOF'
+List the services found: one record per Host, port and protocol
+
+Usage: nessie services [scan.nessus...]   (or a results stream on stdin)
+
+Emits nessus-service records: each Host, port and protocol (port 0 aside)
+that any Result names, per scan, with the Nessus plugin IDs that fired
+there. svc_name is Service Detection's (22964) when it fired on the port,
+otherwise the most common one, a name ending in ? losing to one without.
+Other kinds of record are dropped. Malformed lines are reported.
+
+Flags:
+  -h, --help    Show this help
+EOF
+}
+
+fail() { # code message
+	echo "$NAME: $2" >&2
+	exit "$1"
+}
+
+need_jq() {
+	command -v jq >/dev/null || fail 1 "needs jq 1.7 or later, and there is no jq on PATH"
+	local v
+	v=$(jq --version 2>/dev/null)
+	v=${v#jq-}
+	[[ $v =~ ^1\.([0-9]+) && ${BASH_REMATCH[1]} -ge 7 ]] || fail 1 "needs jq 1.7 or later, and this is jq $v"
+}
+files=()
+while (($#)); do
+	case $1 in
+	--describe) describe; exit 0 ;;
+	-h | --help) usage; exit 0 ;;
+	--) shift; files+=("$@"); break ;;
+	-?*) fail 2 "unknown flag $1 (see nessie services --help)" ;;
+	*) files+=("$1"); shift ;;
+	esac
+done
+
+need_jq
+# Project each Result to what a service needs, so the grouping that holds
+# them all in memory holds little.
+project="$LIB"' lines("'"$NAME"'"; .rec | select(.kind == "nessus-result" and .port != 0)
+  | {scan, host, port, protocol, svc_name, plugin_id} | tojson)'
+group='
+  to_entries
+  | group_by(.value | [.scan, .host, .port, .protocol])
+  | sort_by(.[0].key)
+  | .[] | map(.value) as $g | $g[0] as $f
+  | {kind: "nessus-service", schema_version: 1, scan: $f.scan, host: $f.host, port: $f.port, protocol: $f.protocol,
+     svc_name: (([$g[] | select(.plugin_id == 22964) | .svc_name] | first)
+       // ($g | map(.svc_name) | group_by(.) | sort_by([(.[0] | endswith("?")), -length]) | first | first)),
+     plugin_ids: ($g | map(.plugin_id) | unique)}'
+run() { jq -nrR -L "$DIR" "$project" | jq -sc "$group"; }
+if ((${#files[@]})); then
+	"${NESSIE_BIN:-nessie}" results -- "${files[@]}" | run
+else
+	[[ -t 0 ]] && fail 2 "no input: name a scan, or pipe records in"
+	run
+fi

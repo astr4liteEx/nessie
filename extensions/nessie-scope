@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+# nessie-scope: one rpt scope record per Host, for rpt scope add. Part of
+# nessie (https://github.com/astr4liteEx/nessie); needs bash and jq 1.7 or later.
+set -uo pipefail
+VERSION=0.0.0-dev # release.sh stamps the release's version
+NAME=nessie-scope
+DIR=$(cd "$(dirname "$(readlink -f "$0")")" && pwd)
+LIB='include "nessie";' # release.sh inlines extensions/nessie.jq here
+
+describe() {
+	cat <<EOF
+{"summary":"Emit an rpt scope record per Host, for rpt scope add","usage":"nessie scope [scan.nessus...] (or hosts or results records on stdin)","version":"$VERSION","input":"records","output":"records","roles":["source"]}
+EOF
+}
+
+usage() {
+	cat <<'EOF'
+Emit an rpt scope record per Host, for rpt scope add
+
+Usage: nessie scope [scan.nessus...]   (or nessus-host or nessus-result records on stdin)
+
+Each Host once, as {"kind":"scope","host": fqdn, else ip, else name}, in the
+order first seen. Scans are read with nessie hosts, so a Host with no
+Results is included; a results stream names only Hosts with Results.
+Other kinds of record are dropped. Malformed lines are reported.
+
+  nessie scope scan.nessus | rpt scope add
+
+Flags:
+  -h, --help    Show this help
+EOF
+}
+
+fail() { # code message
+	echo "$NAME: $2" >&2
+	exit "$1"
+}
+
+need_jq() {
+	command -v jq >/dev/null || fail 1 "needs jq 1.7 or later, and there is no jq on PATH"
+	local v
+	v=$(jq --version 2>/dev/null)
+	v=${v#jq-}
+	[[ $v =~ ^1\.([0-9]+) && ${BASH_REMATCH[1]} -ge 7 ]] || fail 1 "needs jq 1.7 or later, and this is jq $v"
+}
+files=()
+while (($#)); do
+	case $1 in
+	--describe) describe; exit 0 ;;
+	-h | --help) usage; exit 0 ;;
+	--) shift; files+=("$@"); break ;;
+	-?*) fail 2 "unknown flag $1 (see nessie scope --help)" ;;
+	*) files+=("$1"); shift ;;
+	esac
+done
+
+need_jq
+prog="$LIB"' foreach lines("'"$NAME"'"; .rec | select(.kind == "nessus-host" or .kind == "nessus-result")
+    | .host | host_label | select(. != "")) as $h
+  ({seen: {}}; if .seen[$h] then .emit = false else .seen[$h] = true | .emit = true end;
+   select(.emit) | {kind: "scope", host: $h} | tojson)'
+run() { jq -nrR -L "$DIR" "$prog"; }
+if ((${#files[@]})); then
+	"${NESSIE_BIN:-nessie}" hosts -- "${files[@]}" | run
+else
+	[[ -t 0 ]] && fail 2 "no input: name a scan, or pipe records in"
+	run
+fi

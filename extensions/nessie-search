@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+# nessie-search: keep the nessus-result records whose text matches a regex.
+# Part of nessie (https://github.com/astr4liteEx/nessie); needs bash and jq
+# 1.7 or later.
+set -uo pipefail
+VERSION=0.0.0-dev # release.sh stamps the release's version
+NAME=nessie-search
+DIR=$(cd "$(dirname "$(readlink -f "$0")")" && pwd)
+LIB='include "nessie";' # release.sh inlines extensions/nessie.jq here
+
+describe() {
+	cat <<EOF
+{"summary":"Keep the Results whose name, elements or output match a regex","usage":"nessie search [-i] [--in members] <regex> [scan.nessus...] (or a results stream on stdin)","version":"$VERSION","input":"records","output":"records","roles":["source","filter"]}
+EOF
+}
+
+usage() {
+	cat <<'EOF'
+Keep the Results whose name, elements or output match a regex
+
+Usage: nessie search [-i] [--in members] <regex> [scan.nessus...]   (or a results stream on stdin)
+
+The regex is jq's (Oniguruma). By default it is tried on plugin_name,
+every elements value and plugin_output; scans are read with their output.
+
+Flags:
+  -i, --ignore-case     Ignore case
+  --in <members>        Search only these, a comma list: plugin_name,
+                        plugin_output, svc_name, or element names (cve, synopsis, ...)
+  -h, --help            Show this help
+
+Other kinds of record pass through unchanged. Malformed lines are reported
+and dropped.
+EOF
+}
+
+fail() { # code message
+	echo "$NAME: $2" >&2
+	exit "$1"
+}
+
+need_jq() {
+	command -v jq >/dev/null || fail 1 "needs jq 1.7 or later, and there is no jq on PATH"
+	local v
+	v=$(jq --version 2>/dev/null)
+	v=${v#jq-}
+	[[ $v =~ ^1\.([0-9]+) && ${BASH_REMATCH[1]} -ge 7 ]] || fail 1 "needs jq 1.7 or later, and this is jq $v"
+}
+flags=g
+in='[]'
+re=
+have_re=0
+files=()
+while (($#)); do
+	case $1 in
+	--describe) describe; exit 0 ;;
+	-h | --help) usage; exit 0 ;;
+	-i | --ignore-case) flags=gi; shift ;;
+	--in=*) in=${1#*=}; shift; in=$(printf '%s' "$in" | jq -Rc 'split(",") | map(select(. != ""))') ;;
+	--in) (($# >= 2)) || fail 2 "--in needs a value"; in=$(printf '%s' "$2" | jq -Rc 'split(",") | map(select(. != ""))'); shift 2 ;;
+	--) shift; break ;;
+	-?*) fail 2 "unknown flag $1 (see nessie search --help)" ;;
+	*) if ((have_re)); then files+=("$1"); else re=$1; have_re=1; fi; shift ;;
+	esac
+done
+for a in "$@"; do
+	if ((have_re)); then files+=("$a"); else re=$a; have_re=1; fi
+done
+((have_re)) || fail 2 "give a regex: nessie search <regex> [scan.nessus...]"
+
+need_jq
+jq -n --arg re "$re" --arg f "$flags" '"" | test($re; $f)' >/dev/null 2>&1 || fail 2 "not a valid regex: $re"
+prog="$LIB"' lines("'"$NAME"'"; if .rec.kind == "nessus-result" then select(.rec | found($re; $f; $in)) | .raw else .raw end)'
+run() { jq -nrR -L "$DIR" --arg re "$re" --arg f "$flags" --argjson in "$in" "$prog"; }
+if ((${#files[@]})); then
+	"${NESSIE_BIN:-nessie}" results --output -- "${files[@]}" | run
+else
+	[[ -t 0 ]] && fail 2 "no input: name a scan, or pipe records in"
+	run
+fi

@@ -1,0 +1,7 @@
+{"kind":"scope","host":"192.0.2.10"}
+{"kind":"scope","host":"192.0.2.20"}
+{"kind":"scope","host":"192.0.2.30"}
+{"kind":"scope","host":"agent-only"}
+{"kind":"scope","host":"192.0.2.51"}
+{"kind":"scope","host":"host52.example.test"}
+{"kind":"scope","host":"192.0.2.53"}

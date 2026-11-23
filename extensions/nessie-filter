@@ -1,0 +1,117 @@
+#!/usr/bin/env bash
+# nessie-filter: keep the nessus-result records that match. Part of nessie
+# (https://github.com/astr4liteEx/nessie); needs bash and jq 1.7 or later.
+set -uo pipefail
+VERSION=0.0.0-dev # release.sh stamps the release's version
+NAME=nessie-filter
+DIR=$(cd "$(dirname "$(readlink -f "$0")")" && pwd)
+LIB='include "nessie";' # release.sh inlines extensions/nessie.jq here
+
+describe() {
+	cat <<EOF
+{"summary":"Keep the Results that match: by plugin, family, Host, port, CVE, severity or a jq test","usage":"nessie filter [flags] [scan.nessus...] (or a results stream on stdin)","version":"$VERSION","input":"records","output":"records","roles":["source","filter"]}
+EOF
+}
+
+usage() {
+	cat <<'EOF'
+Keep the Results that match: by plugin, family, Host, port, CVE, severity or a jq test
+
+Usage: nessie filter [flags] [scan.nessus...]   (or a results stream on stdin)
+
+Flags (each takes a comma list matched with OR; flags combine with AND):
+  --plugin-id <ids>       Nessus plugin IDs
+  --family <names>        plugin families (ignoring case)
+  --host <hosts>          a Host's name, ip or fqdn, or an IPv4 CIDR its ip is in
+  --port <ports>          ports
+  --protocol <names>      tcp, udp, icmp
+  --cve <ids>             CVE IDs in the Result's cve elements
+  --min-severity <0-4>    severity at least this
+  --max-severity <0-4>    severity at most this
+  --exploit-available     only Results whose exploit_available is true
+  --where <jq>            a jq expression run on each Result; kept when true
+  --output                with scans, include plugin_output
+  -h, --help              Show this help
+
+Other kinds of record, Items included, pass through unchanged: filter
+Results before nessie items. Malformed lines are reported and dropped.
+EOF
+}
+
+fail() { # code message
+	echo "$NAME: $2" >&2
+	exit "$1"
+}
+
+need_jq() {
+	command -v jq >/dev/null || fail 1 "needs jq 1.7 or later, and there is no jq on PATH"
+	local v
+	v=$(jq --version 2>/dev/null)
+	v=${v#jq-}
+	[[ $v =~ ^1\.([0-9]+) && ${BASH_REMATCH[1]} -ge 7 ]] || fail 1 "needs jq 1.7 or later, and this is jq $v"
+}
+
+list() { # flag value pattern: a comma list of items matching pattern, as a JSON array
+	local item out=() IFS=,
+	for item in $2; do
+		[[ $item =~ ^($3)$ ]] || fail 2 "$1: '$item' is not valid"
+		out+=("$item")
+	done
+	((${#out[@]})) || fail 2 "$1 needs a value"
+	printf '%s\n' "${out[@]}" | jq -R . | jq -sc .
+}
+
+declare -A c=([plugin_id]='[]' [family]='[]' [host]='[]' [port]='[]' [protocol]='[]' [cve]='[]' [min_severity]=null [max_severity]=null [exploit_available]=false)
+where=true
+results_flags=()
+files=()
+num='[0-9]+'
+while (($#)); do
+	arg=$1
+	val=
+	if [[ $arg == --*=* ]]; then
+		val=${arg#*=}
+		arg=${arg%%=*}
+		set -- "$arg" "$val" "${@:2}"
+	fi
+	case $arg in
+	--describe) describe; exit 0 ;;
+	-h | --help) usage; exit 0 ;;
+	--exploit-available) c[exploit_available]=true; shift; continue ;;
+	--output) results_flags+=(--output); shift; continue ;;
+	--) shift; files+=("$@"); break ;;
+	--plugin-id | --family | --host | --port | --protocol | --cve | --min-severity | --max-severity | --where)
+		(($# >= 2)) || fail 2 "$arg needs a value"
+		val=$2
+		shift 2
+		;;
+	-?*) fail 2 "unknown flag $arg (see nessie filter --help)" ;;
+	*) files+=("$arg"); shift; continue ;;
+	esac
+	case $arg in
+	--plugin-id) c[plugin_id]=$(list "$arg" "$val" "$num" | jq -c 'map(tonumber)') || exit ;;
+	--port) c[port]=$(list "$arg" "$val" "$num" | jq -c 'map(tonumber)') || exit ;;
+	--family) c[family]=$(list "$arg" "$val" '.+') || exit ;;
+	--host) c[host]=$(list "$arg" "$val" '[^ ]+') || exit ;;
+	--protocol) c[protocol]=$(list "$arg" "$val" '[A-Za-z]+') || exit ;;
+	--cve) c[cve]=$(list "$arg" "$val" '[A-Za-z0-9-]+') || exit ;;
+	--min-severity | --max-severity)
+		[[ $val =~ ^[0-4]$ ]] || fail 2 "$arg: '$val' is not 0 to 4"
+		k=${arg#--}
+		c[${k/-/_}]=$val
+		;;
+	--where) where=$val ;;
+	esac
+done
+
+need_jq
+config=$(for k in "${!c[@]}"; do printf '{"%s":%s}\n' "$k" "${c[$k]}"; done | jq -sc add)
+prog="$LIB"' lines("'"$NAME"'"; if .rec.kind == "nessus-result" then select(.rec | matches($c) and ('"$where"')) | .raw else .raw end)'
+jq -n -L "$DIR" "$LIB def __check: ($where); empty" >/dev/null 2>&1 || fail 2 "--where: not a jq expression: $where"
+
+if ((${#files[@]})); then
+	"${NESSIE_BIN:-nessie}" results "${results_flags[@]}" -- "${files[@]}" | jq -nrR -L "$DIR" --argjson c "$config" "$prog"
+else
+	[[ -t 0 ]] && fail 2 "no input: name a scan, or pipe records in"
+	jq -nrR -L "$DIR" --argjson c "$config" "$prog"
+fi
