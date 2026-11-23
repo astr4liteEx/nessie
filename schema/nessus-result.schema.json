@@ -161,6 +161,26 @@
     "plugin_output": {
       "type": "string",
       "description": "Verbatim, untrimmed. Present only under --output and when the Result has one. A Tenable VM truncation marker (***TRUNCATED***) stays in the text."
+    },
+    "counts": {
+      "type": "object",
+      "description": "Result counts by raw severity, keyed \"0\" to \"4\", plus total.",
+      "properties": {
+        "total": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "required": [
+        "total",
+        "0",
+        "1",
+        "2",
+        "3",
+        "4"
+      ]
     }
   }
 }

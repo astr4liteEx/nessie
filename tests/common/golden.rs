@@ -1,5 +1,5 @@
-//! Golden files: `testdata/golden/<name>.jsonl` holds stdout and
-//! `<name>.err` the exit code and stderr. `UPDATE_GOLDEN=1 cargo test`
+//! Golden files: `testdata/golden/<name>.jsonl` (or `.txt` for a terminal
+//! table) holds stdout and `<name>.err` the exit code and stderr. `UPDATE_GOLDEN=1 cargo test`
 //! rewrites them; review the diff by hand.
 
 use super::Run;
@@ -10,8 +10,13 @@ fn path(name: &str, ext: &str) -> PathBuf {
 }
 
 pub fn check(name: &str, r: &Run) {
+    check_as(name, "jsonl", r);
+}
+
+/// `check` with stdout in `<name>.<ext>`.
+pub fn check_as(name: &str, out_ext: &str, r: &Run) {
     let err = format!("exit {}\n{}", r.code, r.stderr);
-    for (ext, got) in [("jsonl", &r.stdout), ("err", &err)] {
+    for (ext, got) in [(out_ext, &r.stdout), ("err", &err)] {
         let p = path(name, ext);
         if std::env::var_os("UPDATE_GOLDEN").is_some() {
             std::fs::create_dir_all(p.parent().unwrap()).unwrap();

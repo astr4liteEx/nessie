@@ -17,6 +17,15 @@ struct Stop(String);
 
 type Res<T> = Result<T, Stop>;
 
+/// What reading a ReportItem gave.
+enum Got {
+    Item(ReportItem),
+    /// Below --min-severity: skipped, with its severity.
+    Below(u8),
+    /// Its attributes were invalid (already reported).
+    Invalid,
+}
+
 struct Parser<'a, 'd, R: Read> {
     xml: Reader<Input<R>>,
     path: &'a str,
@@ -251,11 +260,15 @@ impl<R: Read> Parser<'_, '_, R> {
                             announced = true;
                             v.host(&host);
                         }
-                        if let Some(item) = self.item(&e)? {
-                            v.item(&host, item);
-                            if v.stop() {
-                                return Err(Stop(String::new()));
+                        match self.item(&e)? {
+                            Got::Item(item) => {
+                                v.item(&host, item);
+                                if v.stop() {
+                                    return Err(Stop(String::new()));
+                                }
                             }
+                            Got::Below(severity) => v.below(&host, severity),
+                            Got::Invalid => {}
                         }
                     }
                     _ => self.skip(&e)?,
@@ -290,18 +303,18 @@ impl<R: Read> Parser<'_, '_, R> {
         }
     }
 
-    /// Reads a ReportItem. None when it is below --min-severity or its
+    /// Reads a ReportItem, unless it is below --min-severity or its
     /// attributes are invalid (reported, and the file goes on).
-    fn item(&mut self, start: &BytesStart) -> Res<Option<ReportItem>> {
+    fn item(&mut self, start: &BytesStart) -> Res<Got> {
         let mut it = ReportItem::default();
         if let Err(msg) = self.item_attrs(start, &mut it) {
             self.error(format!("skipping a Result: {msg}"));
             self.skip(start)?;
-            return Ok(None);
+            return Ok(Got::Invalid);
         }
         if self.opts.min_severity.is_some_and(|min| it.severity < min) {
             self.skip(start)?;
-            return Ok(None);
+            return Ok(Got::Below(it.severity));
         }
         loop {
             match self.next()? {
@@ -324,7 +337,7 @@ impl<R: Read> Parser<'_, '_, R> {
                         None => it.elements.push((name, values)),
                     }
                 }
-                Event::End(_) => return Ok(Some(it)),
+                Event::End(_) => return Ok(Got::Item(it)),
                 Event::Eof => return Err(Stop("unexpected end of file inside <ReportItem>".into())),
                 _ => {}
             }

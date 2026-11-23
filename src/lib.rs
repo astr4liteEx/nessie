@@ -11,6 +11,7 @@ pub mod jsonl;
 pub mod nessus;
 mod records;
 mod stream;
+pub mod table;
 mod verbs;
 
 use std::io::{BufRead, Write};
@@ -35,6 +36,8 @@ pub struct Io<'a> {
     pub stderr: &'a mut dyn Write,
     pub stdin_tty: bool,
     pub stdout_tty: bool,
+    /// How tables are drawn when stdout is a terminal.
+    pub style: table::Style,
 }
 
 /// Runs nessie with `args` (without the program name) and returns the exit code.

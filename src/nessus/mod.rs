@@ -78,6 +78,8 @@ pub trait Visitor {
     fn host(&mut self, _host: &Host) {}
     /// A Result on the current Host.
     fn item(&mut self, _host: &Host, _item: ReportItem) {}
+    /// A Result on the current Host skipped for being below --min-severity.
+    fn below(&mut self, _host: &Host, _severity: u8) {}
     /// The end of a Host.
     fn host_end(&mut self, _host: &Host) {}
     /// Checked after each Result: true stops reading (stdout was closed).

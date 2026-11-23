@@ -35,16 +35,8 @@
       "minimum": 0
     },
     "results": {
-      "type": "object",
-      "description": "Result counts by raw severity, keyed \"0\" to \"4\", plus total.",
-      "properties": {
-        "total": {
-          "type": "integer"
-        }
-      },
-      "additionalProperties": {
-        "type": "integer"
-      }
+      "$ref": "nessus-result.schema.json#/$defs/counts",
+      "description": "The scan's Result counts."
     },
     "nessus_version": {
       "type": "string",

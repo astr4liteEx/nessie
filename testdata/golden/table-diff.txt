@@ -1,0 +1,13 @@
+╭──────────────┬────────────────┬─────────┬─────┬────────┬──────────────────────────────┬──────────╮
+│ State        │ Host           │ Port    │ Sev │ Plugin │ Name                         │ Changed  │
+├──────────────┼────────────────┼─────────┼─────┼────────┼──────────────────────────────┼──────────┤
+│ present      │ b.example.test │ 445/tcp │ 4   │ 201010 │ Fixture Critical SMB Flaw    │          │
+│ present      │ a.example.test │ 443/tcp │ 3   │ 57582  │ SSL Self-Signed Certificate  │ severity │
+│ host-missing │ 192.0.2.72     │ 80/tcp  │ 3   │ 156899 │ Fixture Web Server Outdated  │          │
+│ fixed        │ a.example.test │ 443/tcp │ 2   │ 104743 │ TLS Version 1.0 Protocol De… │          │
+│ new          │ a.example.test │ 443/tcp │ 0   │ 10107  │ HTTP Server Type and Version │          │
+│ present      │ a.example.test │ 443/tcp │ 0   │ 10335  │ Nessus TCP scanner           │          │
+│ fixed        │ a.example.test │ 443/tcp │ 0   │ 10335  │ Nessus TCP scanner           │          │
+│ new          │ 192.0.2.80     │ -       │ 0   │ 19506  │ Nessus Scan Information      │          │
+╰──────────────┴────────────────┴─────────┴─────┴────────┴──────────────────────────────┴──────────╯
+8 results · new 2 · fixed 2 · host-missing 1 · present 3 · changed 1

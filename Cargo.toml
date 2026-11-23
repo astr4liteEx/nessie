@@ -12,6 +12,8 @@ publish = false
 serde_json = { version = "1", features = ["preserve_order"] }
 # 0.x: the API changes between minors, so pin exactly (ADR 0001).
 quick-xml = "=0.42.0"
+terminal_size = "0.4"
+unicode-width = "0.2"
 
 # Tests push tens of MB of JSON through serde_json: optimise dependencies
 # even in dev builds (as rpt-tui does).

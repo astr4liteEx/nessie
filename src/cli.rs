@@ -55,6 +55,7 @@ pub struct Ctx<'a> {
     pub diag: Diag<'a>,
     pub stdin_tty: bool,
     pub stdout_tty: bool,
+    pub style: crate::table::Style,
 }
 
 /// A verb's parsed command line.
@@ -229,14 +230,32 @@ pub fn run(args: &[String], io: &mut Io) -> i32 {
     if parsed.has("help") {
         return print(io, &help(verb));
     }
-    let mut ctx = Ctx {
-        stdin: &mut *io.stdin,
-        stdout: &mut *io.stdout,
-        diag: Diag::new(&mut *io.stderr),
-        stdin_tty: io.stdin_tty,
-        stdout_tty: io.stdout_tty,
+    // On a terminal, a verb's records are drawn as tables: the verb writes
+    // JSON Lines as always, into a buffer the tables are drawn from.
+    let tables = io.stdout_tty && !parsed.has("json") && verb.output == Some("records") && verb.name != "table";
+    let mut buf = Vec::new();
+    let code = {
+        let mut ctx = Ctx {
+            stdin: &mut *io.stdin,
+            stdout: if tables { &mut buf } else { &mut *io.stdout },
+            diag: Diag::new(&mut *io.stderr),
+            stdin_tty: io.stdin_tty,
+            stdout_tty: io.stdout_tty,
+            style: io.style,
+        };
+        (verb.run)(&parsed, &mut ctx)
     };
-    (verb.run)(&parsed, &mut ctx)
+    if !tables {
+        return code;
+    }
+    let mut t = crate::table::Tables::new(verb.name == "merge");
+    for line in buf.split(|b| *b == b'\n').filter(|l| !l.is_empty()) {
+        t.line(line).expect("nessie's own records are JSON objects");
+    }
+    match io.stdout.write_all(t.render(io.style).as_bytes()) {
+        Ok(()) => code,
+        Err(_) => code.max(exit::PROBLEMS),
+    }
 }
 
 #[cfg(test)]

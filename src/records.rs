@@ -52,3 +52,13 @@ pub fn result(scan: &Value, host: &Value, it: ReportItem) -> Value {
     }
     Value::Object(m)
 }
+
+/// Result counts by severity, keyed "0" to "4", after their total.
+pub fn counts(by_severity: &[u64; 5]) -> Value {
+    let mut m = Map::new();
+    m.insert("total".into(), by_severity.iter().sum::<u64>().into());
+    for (sev, n) in by_severity.iter().enumerate() {
+        m.insert(sev.to_string(), (*n).into());
+    }
+    Value::Object(m)
+}

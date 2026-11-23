@@ -48,6 +48,12 @@ impl<'w> Diag<'w> {
         self.emit(loc, "warning: ", &msg.to_string());
     }
 
+    /// A line passed on as it is, such as an upstream tool's problem: no
+    /// prefix, and the exit code is unchanged.
+    pub fn note(&mut self, line: &str) {
+        let _ = writeln!(self.w, "{line}");
+    }
+
     /// True once any error has been reported.
     pub fn failed(&self) -> bool {
         self.failed

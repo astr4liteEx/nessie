@@ -11,6 +11,7 @@ mod items;
 mod merge;
 mod results;
 mod scan;
+mod table;
 mod version;
 
 /// The built-in verbs, in the order help lists them.
@@ -102,8 +103,10 @@ pub static ALL: &[Verb] = &[
         output: Some("records"),
         roles: &["sink", "filter"],
         flags: &[],
-        notes: "",
-        run: not_built,
+        notes: "One table per record kind, in the order each first appears; kinds with no table follow\n\
+                as JSON. problem records are printed on stderr as text. Off a terminal, or with --json,\n\
+                lines pass through unchanged.",
+        run: table::run,
     },
     Verb {
         name: "version",
@@ -201,9 +204,4 @@ pub fn each_scan(
 pub fn usage(ctx: &mut Ctx, verb: &str, msg: &str) -> i32 {
     ctx.diag.error(Loc::none(), format!("{verb}: {msg}"));
     crate::exit::USAGE
-}
-
-fn not_built(_: &Args, ctx: &mut Ctx) -> i32 {
-    ctx.diag.error(Loc::none(), "this verb is not built yet");
-    ctx.diag.code()
 }

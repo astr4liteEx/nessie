@@ -4,7 +4,7 @@
 use crate::cli::{Args, Ctx};
 use crate::nessus::{self, Host, Options, Policy, ReportItem, Visitor};
 use crate::{jsonl, records};
-use serde_json::{Map, Value, json};
+use serde_json::{Map, Value};
 
 /// Nessus Scan Information: the only place the scanner version is written.
 const SCAN_INFO: u64 = 19506;
@@ -73,12 +73,7 @@ fn record(file: &str, s: Summary) -> Value {
     let prefs: Map<String, Value> = s.policy.server_preferences.into_iter().map(|(k, v)| (k, v.into())).collect();
     m.insert("server_preferences".into(), Value::Object(prefs));
     m.insert("hosts".into(), s.hosts.into());
-    let mut results = Map::new();
-    results.insert("total".into(), json!(s.by_severity.iter().sum::<u64>()));
-    for (sev, n) in s.by_severity.iter().enumerate() {
-        results.insert(sev.to_string(), json!(n));
-    }
-    m.insert("results".into(), Value::Object(results));
+    m.insert("results".into(), records::counts(&s.by_severity));
     if let Some(v) = s.nessus_version {
         m.insert("nessus_version".into(), v.into());
     }

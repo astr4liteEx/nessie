@@ -21,7 +21,15 @@ pub fn run_tty(args: &[&str], stdin: &[u8], stdout_tty: bool) -> Run {
     let mut out = Vec::new();
     let mut err = Vec::new();
     let code = {
-        let mut io = nessie::Io { stdin: &mut input, stdout: &mut out, stderr: &mut err, stdin_tty: false, stdout_tty };
+        let mut io = nessie::Io {
+            stdin: &mut input,
+            stdout: &mut out,
+            stderr: &mut err,
+            stdin_tty: false,
+            stdout_tty,
+            // Snapshots: no colour, and a fixed width.
+            style: nessie::table::Style { color: false, width: 100 },
+        };
         nessie::run(&args, &mut io)
     };
     Run { code, stdout: String::from_utf8(out).unwrap(), stderr: String::from_utf8(err).unwrap() }

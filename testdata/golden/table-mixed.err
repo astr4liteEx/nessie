@@ -1,0 +1,3 @@
+exit 1
+-:4: error[readable]: upstream trouble
+nessie: -:6: invalid JSON: expected ident at line 1 column 2
