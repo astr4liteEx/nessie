@@ -40,6 +40,11 @@ fn version_prints_one_record() {
     let v = &lines(&r.stdout)[0];
     assert_eq!(v["kind"], "version");
     assert_eq!(v["schema_versions"]["nessus-result"], 1);
+    // rpt's version schema requires these, so rpt-nessus version validates.
+    assert_eq!(v["version"], env!("CARGO_PKG_VERSION"));
+    assert_eq!(v["format"], 2, "NessusClientData_v2");
+    let highest = v["schema_versions"].as_object().unwrap().values().filter_map(|n| n.as_u64()).max();
+    assert_eq!(v["schema_version"].as_u64(), highest, "schema_version is the highest kind's");
     assert_eq!(run(&["--version"], b"").stdout, r.stdout);
 }
 
