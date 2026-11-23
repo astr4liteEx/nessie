@@ -118,46 +118,64 @@ pub fn describe(path: &Path) -> Result<Map<String, Value>, String> {
     }
 }
 
-/// The child being waited for, for the signal handler.
+/// The child being waited for, for the signal handler; 0 before it starts.
 static CHILD: AtomicI32 = AtomicI32::new(0);
+/// A signal that came before the child started, to pass on once it has.
+static PENDING: AtomicI32 = AtomicI32::new(0);
 
 extern "C" fn relay(sig: libc::c_int) {
     let pid = CHILD.load(Ordering::SeqCst);
     if pid > 0 {
         // SAFETY: kill is async-signal-safe.
         unsafe { libc::kill(pid, sig) };
+    } else {
+        PENDING.store(sig, Ordering::SeqCst);
     }
 }
 
-/// While alive: SIGINT is ignored (the terminal sends it to the child too,
-/// as they share a process group) and SIGTERM and SIGHUP are passed on.
+/// While alive: SIGTERM and SIGHUP are passed on to the child, and once it
+/// has started, SIGINT is ignored (the terminal sends it to the child too,
+/// as they share a process group). Made before the child is spawned, so a
+/// signal in between isn't lost; SIGINT is ignored only after, because an
+/// ignored signal stays ignored in a child.
 struct Relay {
-    old: [(libc::c_int, libc::sighandler_t); 3],
+    old: Vec<(libc::c_int, libc::sighandler_t)>,
 }
 
 impl Relay {
-    fn new(pid: u32) -> Self {
-        CHILD.store(pid as i32, Ordering::SeqCst);
+    fn new() -> Self {
+        CHILD.store(0, Ordering::SeqCst);
+        PENDING.store(0, Ordering::SeqCst);
         let handler = relay as extern "C" fn(libc::c_int) as libc::sighandler_t;
         // SAFETY: installing handlers; restored on drop.
         let old = unsafe {
-            [
-                (libc::SIGINT, libc::signal(libc::SIGINT, libc::SIG_IGN)),
+            vec![
                 (libc::SIGTERM, libc::signal(libc::SIGTERM, handler)),
                 (libc::SIGHUP, libc::signal(libc::SIGHUP, handler)),
             ]
         };
         Self { old }
     }
+
+    fn started(&mut self, pid: u32) {
+        // SAFETY: as in new.
+        self.old.push((libc::SIGINT, unsafe { libc::signal(libc::SIGINT, libc::SIG_IGN) }));
+        CHILD.store(pid as i32, Ordering::SeqCst);
+        let sig = PENDING.swap(0, Ordering::SeqCst);
+        if sig > 0 {
+            // SAFETY: as in relay.
+            unsafe { libc::kill(pid as i32, sig) };
+        }
+    }
 }
 
 impl Drop for Relay {
     fn drop(&mut self) {
-        for (sig, h) in self.old {
+        CHILD.store(0, Ordering::SeqCst);
+        for (sig, h) in self.old.drain(..).rev() {
             // SAFETY: restoring what was there.
             unsafe { libc::signal(sig, h) };
         }
-        CHILD.store(0, Ordering::SeqCst);
     }
 }
 
@@ -192,6 +210,7 @@ pub fn run(
     if wrap {
         cmd.stdout(Stdio::piped());
     }
+    let mut relay = Relay::new();
     let mut child = match cmd.spawn() {
         Ok(c) => c,
         Err(e) => {
@@ -199,7 +218,7 @@ pub fn run(
             return crate::exit::PROBLEMS;
         }
     };
-    let relay = Relay::new(child.id());
+    relay.started(child.id());
     let mut bad = false;
     if let Some(out) = child.stdout.take() {
         bad = draw(out, stdout, style, stderr);
