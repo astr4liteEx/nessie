@@ -1,0 +1,2 @@
+exit 1
+nessie: testdata/scans/hostile/entity.nessus:4: refusing an ENTITY declaration (a DTD in a scan is never needed)

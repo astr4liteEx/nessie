@@ -1,0 +1,1 @@
+<NessusClientData_v2><Report name="h"><ReportHost name="192.0.2.60"><HostProperties><tag name="host-ip">192.0.2.60</tag></HostProperties><ReportItem port="0" svc_name="general" protocol="tcp" severity="0" pluginID="10287" pluginName="Traceroute" pluginFamily="General"><plugin_output>banner&#x1b;[0m &#9; tab</plugin_output></ReportItem></ReportHost></Report></NessusClientData_v2>

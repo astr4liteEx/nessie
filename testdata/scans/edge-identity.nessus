@@ -1,0 +1,19 @@
+<?xml version="1.0" ?>
+<NessusClientData_v2>
+<Policy><policyName>Fixture identity</policyName></Policy>
+<Report name="Fixture identity edges" xmlns:cm="http://www.nessus.org/cm">
+<ReportHost name="agent-only"><HostProperties></HostProperties>
+<ReportItem port="0" svc_name="general" protocol="tcp" severity="0" pluginID="19506" pluginName="Nessus Scan Information" pluginFamily="Settings"/>
+</ReportHost>
+<ReportHost name="192.0.2.51"><HostProperties><tag name="host-ip">192.0.2.51</tag></HostProperties>
+<ReportItem port="8080" svc_name="www" protocol="tcp" severity="1" pluginID="10107" pluginName="HTTP Server Type &amp; Version" pluginFamily="Web Servers">
+<synopsis>A web server is running on the remote host.</synopsis>
+</ReportItem>
+</ReportHost>
+<ReportHost name="host52.example.test"><HostProperties><tag name="host-ip">192.0.2.52</tag><tag name="host-fqdn">host52.example.test</tag><tag name="host-rdns">host52.example.test</tag></HostProperties>
+<ReportItem port="22" svc_name="ssh" protocol="tcp" severity="0" pluginID="10881" pluginName="SSH Protocol Versions Supported" pluginFamily="General"><synopsis>A SSH server is running on the remote host.</synopsis></ReportItem>
+</ReportHost>
+<ReportHost name="192.0.2.53"><HostProperties><tag name="host-ip">192.0.2.53</tag><tag name="host-fqdn"></tag></HostProperties>
+</ReportHost>
+</Report>
+</NessusClientData_v2>

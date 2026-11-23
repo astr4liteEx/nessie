@@ -10,6 +10,11 @@ publish = false
 [dependencies]
 # Keep member order: records print in the order nessie builds them.
 serde_json = { version = "1", features = ["preserve_order"] }
+# 0.x: the API changes between minors, so pin exactly (ADR 0001).
+quick-xml = "=0.42.0"
 
 [profile.release]
 strip = true
+
+[dev-dependencies]
+jsonschema = { version = "0.61", default-features = false }

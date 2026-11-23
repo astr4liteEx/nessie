@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<!DOCTYPE x [
+<!ENTITY lol "lol">
+]>
+<NessusClientData_v2>&lol;</NessusClientData_v2>

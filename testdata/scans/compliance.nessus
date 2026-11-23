@@ -1,0 +1,19 @@
+<?xml version="1.0" ?>
+<NessusClientData_v2>
+<Policy><policyName>Fixture audit</policyName></Policy>
+<Report name="Fixture compliance" xmlns:cm="http://www.nessus.org/cm">
+<ReportHost name="192.0.2.40"><HostProperties><tag name="host-ip">192.0.2.40</tag></HostProperties>
+<ReportItem port="0" svc_name="general" protocol="tcp" severity="2" pluginID="21157" pluginName="Unix Compliance Checks" pluginFamily="Policy Compliance">
+<compliance>true</compliance>
+<plugin_type>local</plugin_type>
+<risk_factor>None</risk_factor>
+<cm:compliance-check-name>1.1 Ensure /tmp is a separate partition</cm:compliance-check-name>
+<cm:compliance-result>FAILED</cm:compliance-result>
+<cm:compliance-actual-value>/tmp is not mounted</cm:compliance-actual-value>
+<cm:compliance-audit-file>CIS_Fixture_L1.audit</cm:compliance-audit-file>
+<cm:compliance-check-id>0123abcd</cm:compliance-check-id>
+<cm:compliance-info>Placing /tmp on its own partition limits what a full /tmp can break.</cm:compliance-info>
+</ReportItem>
+</ReportHost>
+</Report>
+</NessusClientData_v2>

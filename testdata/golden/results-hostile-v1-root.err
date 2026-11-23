@@ -1,0 +1,2 @@
+exit 1
+nessie: testdata/scans/hostile/v1-root.nessus:2: this is the Nessus v1 format (NessusClientData), which nessie doesn't read: export the scan as .nessus (v2)

@@ -5,7 +5,10 @@
 
 pub mod cli;
 pub mod diag;
+mod inputs;
 pub mod jsonl;
+pub mod nessus;
+mod records;
 mod verbs;
 
 use std::io::{BufRead, Write};

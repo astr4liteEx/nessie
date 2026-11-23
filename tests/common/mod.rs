@@ -2,6 +2,9 @@
 
 #![allow(dead_code)]
 
+pub mod golden;
+pub mod schema;
+
 pub struct Run {
     pub code: i32,
     pub stdout: String,

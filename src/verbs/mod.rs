@@ -3,6 +3,7 @@
 use crate::cli::{Args, Ctx, MIN_SEVERITY, OUTPUT, Verb};
 use crate::diag::Loc;
 
+mod results;
 mod version;
 
 /// The built-in verbs, in the order help lists them.
@@ -15,8 +16,9 @@ pub static ALL: &[Verb] = &[
         output: Some("records"),
         roles: &["source"],
         flags: &[OUTPUT, MIN_SEVERITY],
-        notes: "",
-        run: not_built,
+        notes: "Reads XML only, from files or stdin; at most one input may be -. A compressed scan:\n\
+                zcat scan.nessus.gz | nessie results",
+        run: results::run,
     },
     Verb {
         name: "hosts",
@@ -100,6 +102,23 @@ pub static ALL: &[Verb] = &[
 /// The built-in verb named `name`.
 pub fn find(name: &str) -> Option<&'static Verb> {
     ALL.iter().find(|v| v.name == name)
+}
+
+/// The parser options from --output and --min-severity.
+pub fn parse_options(args: &Args) -> Result<crate::nessus::Options, String> {
+    let min_severity = match args.value("min-severity") {
+        None => None,
+        Some(v) => {
+            Some(v.parse::<u8>().ok().filter(|n| *n <= 4).ok_or_else(|| format!("--min-severity {v:?} is not 0-4"))?)
+        }
+    };
+    Ok(crate::nessus::Options { output: args.has("output"), min_severity, read_policy: false })
+}
+
+/// Reports a usage error found by a verb and returns exit 2.
+pub fn usage(ctx: &mut Ctx, verb: &str, msg: &str) -> i32 {
+    ctx.diag.error(Loc::none(), format!("{verb}: {msg}"));
+    crate::exit::USAGE
 }
 
 fn not_built(_: &Args, ctx: &mut Ctx) -> i32 {

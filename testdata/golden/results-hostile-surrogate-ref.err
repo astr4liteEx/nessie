@@ -1,0 +1,2 @@
+exit 0
+nessie: testdata/scans/hostile/surrogate-ref.nessus: warning: replaced 1 character reference(s) to invalid code points with U+FFFD

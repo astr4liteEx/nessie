@@ -1,0 +1,2 @@
+exit 1
+nessie: testdata/scans/hostile/doctype.nessus:2: refusing a DOCTYPE (a DTD in a scan is never needed)

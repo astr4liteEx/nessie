@@ -1,0 +1,2 @@
+exit 1
+nessie: testdata/scans/hostile/broken.nessus:5: broken XML: ill-formed document: expected `</ReportHost>`, but `</Report>` was found

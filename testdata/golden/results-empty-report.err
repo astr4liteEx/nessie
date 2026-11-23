@@ -1,0 +1,2 @@
+exit 0
+nessie: testdata/scans/empty-report.nessus: warning: empty scan: the Report has no Hosts

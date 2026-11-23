@@ -1,0 +1,5 @@
+<?xml version="1.0" ?>
+<NessusClientData_v2>
+<Policy><policyName>Fixture empty</policyName></Policy>
+<Report name="Fixture empty report"></Report>
+</NessusClientData_v2>

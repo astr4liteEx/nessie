@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<NessusClientData_v2>
+<Policy><policyName>Fixture policy only</policyName>
+<Preferences><ServerPreferences><preference><name>TARGET</name>
+<value>192.0.2.0/24</value>
+</preference>
+</ServerPreferences>
+</Preferences>
+</Policy>
+</NessusClientData_v2>

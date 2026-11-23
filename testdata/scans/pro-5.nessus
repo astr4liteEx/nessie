@@ -1,0 +1,86 @@
+<?xml version="1.0" ?>
+<NessusClientData_v2>
+<Policy><policyName>Fixture Internal Network Scan</policyName>
+<Preferences><ServerPreferences><preference><name>TARGET</name>
+<value>198.51.100.5</value>
+</preference>
+<preference><name>plugin_set</name>
+<value>10107;19506;45590;20007</value>
+</preference>
+</ServerPreferences>
+</Preferences>
+</Policy>
+<Report name="Fixture old scan" xmlns:cm="http://www.nessus.org/cm">
+<ReportHost name="198.51.100.5"><HostProperties>
+<tag name="HOST_END">Wed Jun 26 07:10:00 2013</tag>
+<tag name="operating-system">Microsoft Windows Server 2008 R2 Enterprise Service Pack 1</tag>
+<tag name="host-fqdn">old.example.test</tag>
+<tag name="host-ip">198.51.100.5</tag>
+<tag name="HOST_START">Wed Jun 26 06:15:00 2013</tag>
+</HostProperties>
+<ReportItem port="0" svc_name="general" protocol="tcp" severity="0" pluginID="19506" pluginName="Nessus Scan Information" pluginFamily="Settings">
+<description>This script displays, for each tested host, information about the scan itself.</description>
+<fname>scan_info.nasl</fname>
+<plugin_modification_date>2013/05/31</plugin_modification_date>
+<plugin_name>Nessus Scan Information</plugin_name>
+<plugin_type>summary</plugin_type>
+<risk_factor>None</risk_factor>
+<script_version>$Revision: 1.58 $</script_version>
+<solution>n/a</solution>
+<synopsis>Information about the Nessus scan.</synopsis>
+<plugin_output>Information about this scan : 
+
+Nessus version : 5.2.1 (Nessus 5.2.4 is available - consider upgrading)
+Plugin feed version : 201306260615
+Type of plugin feed : HomeFeed (Non-commercial use only)
+Scanner IP : 198.51.100.250
+Port scanner(s) : nessus_syn_scanner 
+Port range : default
+Thorough tests : no
+Experimental tests : no
+Paranoia level : 1
+Report Verbosity : 1
+Safe checks : yes
+Optimize the test : yes
+Credentialed checks : no
+Patch management checks : None
+CGI scanning : disabled
+Web application tests : disabled
+Max hosts : 80
+Max checks : 5
+Recv timeout : 5
+Backports : None
+Allow post-scan editing: Yes
+Scan Start Date : 2013/6/26 6:15
+Scan duration : 3300 sec
+</plugin_output>
+</ReportItem>
+<ReportItem port="0" svc_name="general" protocol="tcp" severity="1" pluginID="45590" pluginName="Common Platform Enumeration (CPE)" pluginFamily="General">
+<cpe>cpe:/o:microsoft:windows_server_2008:r2:sp1
+cpe:/a:microsoft:iis:7.5</cpe>
+<plugin_type>local</plugin_type>
+<risk_factor>None</risk_factor>
+<see_also>http://cpe.mitre.org/
+https://nvd.nist.gov/products/cpe</see_also>
+<synopsis>It is possible to enumerate CPE names that matched on the remote system.</synopsis>
+<plugin_output>
+The remote operating system matched the following CPE : 
+
+  cpe:/o:microsoft:windows_server_2008:r2:sp1 -&gt; Microsoft Windows Server 2008 R2 Service Pack 1
+</plugin_output>
+</ReportItem>
+<ReportItem port="80" svc_name="www" protocol="tcp" severity="2" pluginID="20007" pluginName="SSL Version 2 and 3 Protocol Detection" pluginFamily="Service detection">
+<bid>12345</bid>
+<cvss_base_score>5.0</cvss_base_score>
+<cvss_temporal_score>4.1</cvss_temporal_score>
+<cvss_temporal_vector>CVSS2#E:U/RL:OF/RC:C</cvss_temporal_vector>
+<cvss_vector>CVSS2#AV:N/AC:L/Au:N/C:P/I:N/A:N</cvss_vector>
+<osvdb>99999</osvdb>
+<plugin_publication_date>2005/10/12</plugin_publication_date>
+<plugin_type>remote</plugin_type>
+<risk_factor>Medium</risk_factor>
+<synopsis>The remote service encrypts traffic using a protocol with known weaknesses.</synopsis>
+</ReportItem>
+</ReportHost>
+</Report>
+</NessusClientData_v2>

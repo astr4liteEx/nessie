@@ -1,0 +1,2 @@
+exit 1
+nessie: testdata/scans/hostile/unknown-entity.nessus:1: unknown entity &nbsp;: only the five predefined entities and numeric references exist without a DTD

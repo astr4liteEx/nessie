@@ -1,0 +1,1 @@
+{"kind":"nessus-result","schema_version":1,"scan":{"file":"testdata/scans/hostile/cdata.nessus","name":"h"},"host":{"name":"192.0.2.60","ip":"192.0.2.60"},"port":0,"protocol":"tcp","svc_name":"general","severity":0,"plugin_id":10287,"plugin_name":"Traceroute","plugin_family":"General","elements":{},"plugin_output":"<b>not markup</b> & raw"}
