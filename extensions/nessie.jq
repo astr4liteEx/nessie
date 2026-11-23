@@ -1,7 +1,7 @@
 # Shared by nessie's starter extensions. Run with: jq -nrR -L <dir> 'include "nessie"; ...'
 #
 # Lines are read raw and parsed here, so a record can be printed as the
-# line it arrived as: jq -c would rewrite its escapes ("é" as "é"),
+# line it arrived as: jq -c would rewrite its escapes ("\u00e9" as "é"),
 # and records nessie passes on must come out byte for byte.
 
 # lines($name; f): f runs on {raw, rec, line} for each JSON object on the

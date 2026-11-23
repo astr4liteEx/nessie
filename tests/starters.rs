@@ -148,3 +148,35 @@ fn each_describes_itself_without_jq() {
         assert!(r.stdout.contains(&format!("\"name\":\"{verb}\",\"source\":\"extension\"")), "{verb}");
     }
 }
+
+#[test]
+fn stamped_extensions_work_alone_as_gah_installs_them() {
+    if !have_jq() {
+        return;
+    }
+    // gah puts every executable flat in one folder: no nessie.jq beside them.
+    let dir = std::env::temp_dir().join(format!("nessie-gah-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(&dir).unwrap();
+    std::fs::copy(BIN, dir.join("nessie")).unwrap();
+    let root = env!("CARGO_MANIFEST_DIR");
+    for verb in ["filter", "search", "services", "scope"] {
+        let out = Command::new(format!("{root}/scripts/stamp-extension.sh"))
+            .args([&format!("{root}/extensions/nessie-{verb}"), "9.8.7"])
+            .output()
+            .unwrap();
+        assert!(out.status.success(), "{}", String::from_utf8_lossy(&out.stderr));
+        let p = dir.join(format!("nessie-{verb}"));
+        std::fs::write(&p, &out.stdout).unwrap();
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&p, std::fs::Permissions::from_mode(0o755)).unwrap();
+    }
+    let path = format!("{}:/usr/bin:/bin", dir.display());
+    let run = |args: &[&str]| Command::new(dir.join("nessie")).args(args).env("PATH", &path).output().unwrap();
+    let o = run(&["services", PRO10]);
+    assert!(o.status.success(), "{}", String::from_utf8_lossy(&o.stderr));
+    assert_eq!(String::from_utf8_lossy(&o.stdout), nessie(&["services", PRO10], b"").stdout);
+    let o = run(&["filter", "--describe"]);
+    assert!(String::from_utf8_lossy(&o.stdout).contains("\"version\":\"9.8.7\""));
+    let _ = std::fs::remove_dir_all(&dir);
+}
