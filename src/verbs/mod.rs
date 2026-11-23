@@ -5,8 +5,10 @@ use crate::diag::{Diag, Loc};
 use crate::inputs::{self, Format};
 use std::io::{BufRead, Write};
 
+mod diff;
 mod hosts;
 mod items;
+mod merge;
 mod results;
 mod scan;
 mod version;
@@ -69,8 +71,11 @@ pub static ALL: &[Verb] = &[
         output: Some("records"),
         roles: &["source", "filter"],
         flags: &[OUTPUT, MIN_SEVERITY],
-        notes: "",
-        run: not_built,
+        notes: "Two Results are the same when their Hosts match (fqdn, else ip, else name) and their\n\
+                plugin_id, port and protocol are equal. The later scan wins the whole record; repeats\n\
+                within one scan are kept. List scans oldest first. Emits nessus-result records only.\n\
+                Holds every Result until the end of input.",
+        run: merge::run,
     },
     Verb {
         name: "diff",
@@ -80,8 +85,14 @@ pub static ALL: &[Verb] = &[
         output: Some("records"),
         roles: &["source"],
         flags: &[OUTPUT, MIN_SEVERITY],
-        notes: "",
-        run: not_built,
+        notes: "Each Result gets diff: {state, changed?}. new: only in <new>. present: in both, with\n\
+                changed naming severity, plugin_name, elements or plugin_output (with --output) if they\n\
+                differ. fixed: only in <old>, on a Host <new> has. host-missing: only in <old>, on a\n\
+                Host <new> doesn't have at all, so an unscanned Host never reads as fixed.\n\
+                On a records stream a Host is present if any Result names it, so a --min-severity\n\
+                upstream can make a Host look missing. Always exits 0 when the inputs read cleanly:\n\
+                test for changes with jq -e 'select(.diff.state != \"present\")'.",
+        run: diff::run,
     },
     Verb {
         name: "table",

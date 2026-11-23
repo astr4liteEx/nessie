@@ -5,6 +5,7 @@
 
 pub mod cli;
 pub mod diag;
+mod identity;
 mod inputs;
 pub mod jsonl;
 pub mod nessus;

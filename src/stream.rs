@@ -79,7 +79,6 @@ impl ResultRec {
 pub enum Ev {
     /// A Host in an XML input, before its Results (diff uses it to tell
     /// a Host that was scanned from one that wasn't).
-    #[allow(dead_code)] // read by diff
     Host(Value),
     Result(ResultRec),
     /// A line of another kind, exactly as read.
