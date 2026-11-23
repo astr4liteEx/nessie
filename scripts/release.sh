@@ -36,7 +36,7 @@ for arch in amd64 arm64; do
 	name=nessie_${version}_linux_${arch}
 	dir=$(mktemp -d)
 	mkdir -p "$dir/$name/bin" "$dir/$name/schema"
-	install -m 755 "target/$target/release/nessie" "$dir/$name/bin/nessie"
+	install -m 755 "${CARGO_TARGET_DIR:-target}/$target/release/nessie" "$dir/$name/bin/nessie"
 	for ext in extensions/nessie-*; do
 		scripts/stamp-extension.sh "$ext" "$version" > "$dir/$name/bin/$(basename "$ext")"
 		chmod 755 "$dir/$name/bin/$(basename "$ext")"
